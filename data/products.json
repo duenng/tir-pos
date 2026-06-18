@@ -3,24 +3,302 @@
     "sku": "AMERICANO",
     "name": "Americano",
     "category": "Coffee",
-    "price": 26
+    "price": 26,
+    "hot_price": 26,
+    "iced_price": 28
   },
   {
-    "sku": "NONCOF-PLACEHOLDER",
-    "name": "Coming Soon",
-    "category": "Non-Coffee",
+    "sku": "LATTE",
+    "name": "Latte",
+    "category": "Coffee",
+    "price": 33,
+    "hot_price": 33,
+    "iced_price": 35
+  },
+  {
+    "sku": "CAPP",
+    "name": "Capp",
+    "category": "Coffee",
+    "price": 33,
+    "hot_price": 33,
+    "iced_price": 35
+  },
+  {
+    "sku": "FLAT-WHITE",
+    "name": "Flat White",
+    "category": "Coffee",
+    "price": 36,
+    "hot_price": 36
+  },
+  {
+    "sku": "MOCHA",
+    "name": "Mocha",
+    "category": "Coffee",
+    "price": 36,
+    "hot_price": 36,
+    "iced_price": 38
+  },
+  {
+    "sku": "CARAMEL-MACCHIATO",
+    "name": "Caramel Macciato",
+    "category": "Coffee",
+    "price": 36,
+    "hot_price": 36,
+    "iced_price": 38
+  },
+  {
+    "sku": "HAZELNUT-LATTE",
+    "name": "Hazelnut Latte",
+    "category": "Coffee",
+    "price": 36,
+    "hot_price": 36,
+    "iced_price": 38
+  },
+  {
+    "sku": "VANILLA-LATTE",
+    "name": "Vanilla Latte",
+    "category": "Coffee",
+    "price": 36,
+    "hot_price": 36,
+    "iced_price": 38
+  },
+  {
+    "sku": "CREME-BRULEE",
+    "name": "Creme Brulee",
+    "category": "Coffee",
+    "price": 39,
+    "hot_price": 39
+  },
+  {
+    "sku": "ESPRESSO",
+    "name": "Espresso",
+    "category": "Coffee",
     "price": 0
   },
   {
-    "sku": "DESSERT-PLACEHOLDER",
-    "name": "Coming Soon",
+    "sku": "ESPRESSO-TONIC",
+    "name": "Espresso Tonic",
+    "category": "Coffee",
+    "price": 37,
+    "iced_price": 37
+  },
+  {
+    "sku": "COCONUT-AMERICANO",
+    "name": "Coconut Americano",
+    "category": "Coffee",
+    "price": 37,
+    "iced_price": 37
+  },
+  {
+    "sku": "COCONUT-LATTE",
+    "name": "Coconut Latte",
+    "category": "Coffee",
+    "price": 39,
+    "iced_price": 39
+  },
+  {
+    "sku": "HAND-DRIP",
+    "name": "\u624b\u6c96\u5496\u5561",
+    "category": "Coffee",
+    "price": 0
+  },
+  {
+    "sku": "AFFOGATO",
+    "name": "Affogato",
+    "category": "Coffee",
+    "price": 34,
+    "iced_price": 34
+  },
+  {
+    "sku": "COLD-BREW",
+    "name": "Cold Brew",
+    "category": "Coffee",
+    "price": 35,
+    "iced_price": 35
+  },
+  {
+    "sku": "ORANGE-MILK-FOAM",
+    "name": "\u6a59\u9999\u5976\u84cb",
+    "category": "Coffee",
+    "price": 40,
+    "iced_price": 40
+  },
+  {
+    "sku": "SICILY-COFFEE",
+    "name": "\u897f\u897f\u91cc\u5496\u5561",
+    "category": "Coffee",
+    "price": 40,
+    "iced_price": 40
+  },
+  {
+    "sku": "OSMANTHUS-OOLONG",
+    "name": "\u6842\u82b1\u70cf\u9f8d",
+    "category": "Non-Coffee",
+    "price": 26,
+    "hot_price": 26,
+    "iced_price": 26
+  },
+  {
+    "sku": "JASMINE-GREEN-TEA",
+    "name": "\u8309\u8389\u7da0\u8336",
+    "category": "Non-Coffee",
+    "price": 26,
+    "iced_price": 26
+  },
+  {
+    "sku": "CITRUS-GREEN-TEA",
+    "name": "\u9999\u6a59\u7da0\u8336",
+    "category": "Non-Coffee",
+    "price": 29,
+    "iced_price": 29
+  },
+  {
+    "sku": "MATCHA-FRESH-MILK-UJI",
+    "name": "\u5b87\u6cbb\u62b9\u8336\u9bae\u5976",
+    "category": "Non-Coffee",
+    "price": 31,
+    "hot_price": 31,
+    "iced_price": 33
+  },
+  {
+    "sku": "MATCHA-RED-BEAN-MILK-UJI",
+    "name": "\u5b87\u6cbb\u62b9\u8336\u7d05\u8c46\u9bae\u5976",
+    "category": "Non-Coffee",
+    "price": 33,
+    "hot_price": 33,
+    "iced_price": 35
+  },
+  {
+    "sku": "BROWN-RICE-TEA-MILK",
+    "name": "\u7384\u7c73\u8336\u9bae\u5976",
+    "category": "Non-Coffee",
+    "price": 31,
+    "hot_price": 31,
+    "iced_price": 33
+  },
+  {
+    "sku": "HOJICHA-MILK",
+    "name": "\u7119\u8336\u9bae\u5976",
+    "category": "Non-Coffee",
+    "price": 31,
+    "hot_price": 31,
+    "iced_price": 33
+  },
+  {
+    "sku": "MATCHAGO",
+    "name": "\u62b9\u8336\u963f\u8299\u4f73\u6735",
+    "category": "Non-Coffee",
+    "price": 34,
+    "iced_price": 34
+  },
+  {
+    "sku": "BROWN-SUGAR-BOBA-MILK",
+    "name": "\u9ed1\u7cd6\u73cd\u73e0\u9bae\u5976",
+    "category": "Non-Coffee",
+    "price": 32,
+    "iced_price": 32
+  },
+  {
+    "sku": "CHOCOLATE-FRAPPE",
+    "name": "\u6ce1\u6cab\u6731\u53e4\u529b",
+    "category": "Non-Coffee",
+    "price": 29,
+    "hot_price": 29,
+    "iced_price": 31
+  },
+  {
+    "sku": "EARL-GREY-MILK-TEA",
+    "name": "\u4f2f\u7235\u9bae\u5976\u8336",
+    "category": "Non-Coffee",
+    "price": 36,
+    "hot_price": 36,
+    "iced_price": 38
+  },
+  {
+    "sku": "HONEY-LEMON-SODA",
+    "name": "Honey Lemon Soda",
+    "category": "Non-Coffee",
+    "price": 33,
+    "iced_price": 33
+  },
+  {
+    "sku": "ICE-CREAM-SHAKE",
+    "name": "\u662d\u548c\u96f2\u5462\u62ff\u68b3\u6253",
+    "category": "Non-Coffee",
+    "price": 38,
+    "iced_price": 38
+  },
+  {
+    "sku": "EGG-WAFFLE",
+    "name": "\u96de\u86cb\u4ed4",
     "category": "Dessert",
     "price": 0
   },
   {
-    "sku": "LUNCH-PLACEHOLDER",
-    "name": "Coming Soon",
-    "category": "Lunch",
+    "sku": "WAFFLE",
+    "name": "\u7aa9\u592b",
+    "category": "Dessert",
     "price": 0
+  },
+  {
+    "sku": "BASQUE-CHEESECAKE",
+    "name": "\u5df4\u65af\u514b\u86cb\u7cd5",
+    "category": "Dessert",
+    "price": 0
+  },
+  {
+    "sku": "PISTACHIO-BASQUE-CHEESECAKE",
+    "name": "\u958b\u5fc3\u679c\u5df4\u65af\u514b\u86cb\u7cd5",
+    "category": "Dessert",
+    "price": 0
+  },
+  {
+    "sku": "BOLOGNESE-LASAGNA",
+    "name": "\u8089\u91ac\u5343\u5c64\u9eb5",
+    "category": "Lunch",
+    "price": 62,
+    "stock": 45
+  },
+  {
+    "sku": "BEEF-TRUFFLE-EGGWHITE-RICE",
+    "name": "\u80a5\u725b\u9ed1\u677e\u9732\u7092\u86cb\u767d\u98ef",
+    "category": "Lunch",
+    "price": 58,
+    "stock": 20
+  },
+  {
+    "sku": "BEEF-TRUFFLE-SCRAMBLED-UDON",
+    "name": "\u80a5\u725b\u9ed1\u677e\u9732\u7092\u86cb\u70cf\u51ac",
+    "category": "Lunch",
+    "price": 58,
+    "stock": 20
+  },
+  {
+    "sku": "YAM-CHICKEN-RICE",
+    "name": "\u5c71\u627f\u5496\u54e9\u96de\u98ef",
+    "category": "Lunch",
+    "price": 52,
+    "stock": 20
+  },
+  {
+    "sku": "YAM-CHICKEN-UDON",
+    "name": "\u5c71\u627f\u5496\u54e9\u96de\u8b9a\u5c90\u70cf\u51ac",
+    "category": "Lunch",
+    "price": 52,
+    "stock": 20
+  },
+  {
+    "sku": "PORK-CARTILAGE-BRAISED-EGG-RICE",
+    "name": "\u8c6c\u8edf\u9aa8\u6ef7\u86cb\u98ef",
+    "category": "Lunch",
+    "price": 58,
+    "stock": 20
+  },
+  {
+    "sku": "PORK-CARTILAGE-BRAISED-EGG-UDON",
+    "name": "\u8c6c\u8edf\u9aa8\u6ef7\u86cb\u8b9a\u5c90\u70cf\u51ac",
+    "category": "Lunch",
+    "price": 58,
+    "stock": 20
   }
 ]

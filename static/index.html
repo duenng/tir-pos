@@ -12,15 +12,15 @@
         <div class="modifier-dialog">
           <div class="modifier-head">
             <div>
-              <p class="eyebrow">Drink Modifier</p>
-              <h2 id="modifierTitle">Customize Drink</h2>
+              <p id="modifierEyebrow" class="eyebrow">Item Modifier</p>
+              <h2 id="modifierTitle">Customize Item</h2>
             </div>
             <button id="modifierCloseButton" class="ghost-button small-button" type="button">
               Close
             </button>
           </div>
 
-          <div class="modifier-section">
+          <div id="temperatureSection" class="modifier-section">
             <h3>Temperature</h3>
             <div class="modifier-options">
               <button class="modifier-option active" type="button" data-modifier-group="temperature" data-modifier-value="Hot">
@@ -32,7 +32,7 @@
             </div>
           </div>
 
-          <div class="modifier-section">
+          <div id="milkSection" class="modifier-section">
             <h3>Milk</h3>
             <div class="modifier-options milk-options">
               <button class="modifier-option active" type="button" data-modifier-group="milk" data-modifier-value="">
@@ -53,13 +53,70 @@
             </div>
           </div>
 
+          <div id="toppingSection" class="modifier-section">
+            <h3>Toppings</h3>
+            <div class="modifier-options topping-options">
+              <button class="modifier-option active" type="button" data-modifier-group="topping" data-modifier-value="">
+                No topping
+              </button>
+              <button class="modifier-option" type="button" data-modifier-group="topping" data-modifier-value="Bubble">
+                Bubble +$4
+              </button>
+              <button class="modifier-option" type="button" data-modifier-group="topping" data-modifier-value="Cheese Foam">
+                Cheese Foam +$4
+              </button>
+            </div>
+          </div>
+
+          <div id="dessertOptionSection" class="modifier-section hidden-section">
+            <h3 id="dessertOptionTitle">Dessert Option</h3>
+            <div id="dessertOptionButtons" class="modifier-options dessert-options"></div>
+          </div>
+
+          <div id="iceCreamSection" class="modifier-section hidden-section">
+            <h3>Ice Cream</h3>
+            <div class="modifier-options ice-cream-options">
+              <button class="modifier-option active" type="button" data-modifier-group="iceCreamFlavor" data-modifier-value="Vanilla">
+                Vanilla
+              </button>
+              <button class="modifier-option" type="button" data-modifier-group="iceCreamFlavor" data-modifier-value="Matcha">
+                Matcha
+              </button>
+              <button class="modifier-option" type="button" data-modifier-group="iceCreamFlavor" data-modifier-value="Strawberry">
+                Strawberry
+              </button>
+              <button class="modifier-option" type="button" data-modifier-group="iceCreamFlavor" data-modifier-value="Chocolate">
+                Chocolate
+              </button>
+              <button class="modifier-option" type="button" data-modifier-group="iceCreamFlavor" data-modifier-value="Cookies">
+                Cookies
+              </button>
+            </div>
+          </div>
+
+          <div id="callerSection" class="modifier-section hidden-section">
+            <h3>Caller Number</h3>
+            <div id="callerButtons" class="modifier-options caller-options"></div>
+          </div>
+
+          <div id="lunchStockSection" class="modifier-section hidden-section">
+            <h3>Lunch Stock</h3>
+            <label>
+              Remaining portions
+              <input id="lunchStockInput" type="number" min="0" step="1" placeholder="No limit" />
+            </label>
+            <button id="saveLunchStockButton" class="ghost-button small-button" type="button">
+              Save Stock
+            </button>
+          </div>
+
           <div class="modifier-footer">
             <div class="modifier-total">
-              <span>Drink Price</span>
+              <span>Item Price</span>
               <strong id="modifierPrice">$0.00</strong>
             </div>
             <button id="modifierAddButton" class="primary-button" type="button">
-              Add Drink
+              Add Item
             </button>
           </div>
         </div>

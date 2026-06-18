@@ -4,6 +4,7 @@ import os
 import socket
 import sqlite3
 import ssl
+import textwrap
 from datetime import datetime
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -23,6 +24,16 @@ SHOP_NAME = os.environ.get("POS_SHOP_NAME", "Emergency POS")
 RECEIPT_SHOP_NAME = os.environ.get("POS_RECEIPT_SHOP_NAME", "The Infinity Room")
 SSL_CERT_FILE = os.environ.get("POS_SSL_CERT")
 SSL_KEY_FILE = os.environ.get("POS_SSL_KEY")
+
+
+def env_flag(name: str, default: bool) -> bool:
+    raw_value = os.environ.get(name)
+    if raw_value is None:
+        return default
+    return raw_value.strip().lower() not in {"0", "false", "no", "off", ""}
+
+
+PRINTING_ENABLED = env_flag("POS_PRINTING_ENABLED", True)
 
 
 def ensure_data_files() -> None:
@@ -84,6 +95,67 @@ def save_json(path: Path, payload) -> None:
 
 def list_products():
     return load_json(PRODUCTS_PATH, [])
+
+
+def save_products(products) -> None:
+    save_json(PRODUCTS_PATH, products)
+
+
+def update_product_stock(sku: str, stock_value):
+    products = list_products()
+    normalized_sku = str(sku or "").strip()
+    if not normalized_sku:
+        raise ValueError("SKU is required.")
+    updated_product = None
+    for product in products:
+        if str(product.get("sku", "")).strip() != normalized_sku:
+            continue
+        if stock_value in ("", None):
+            product.pop("stock", None)
+        else:
+            stock = int(stock_value)
+            if stock < 0:
+                raise ValueError("Stock cannot be negative.")
+            product["stock"] = stock
+        updated_product = product
+        break
+    if updated_product is None:
+        raise ValueError(f"Product '{normalized_sku}' not found.")
+    save_products(products)
+    return updated_product
+
+
+def apply_lunch_stock(items):
+    products = list_products()
+    lunch_quantities = {}
+    for item in items:
+        if str(item.get("category", "")).strip().lower() != "lunch":
+            continue
+        sku = str(item.get("sku", "")).strip()
+        if not sku:
+            continue
+        lunch_quantities[sku] = lunch_quantities.get(sku, 0) + int(item.get("quantity", 0))
+    if not lunch_quantities:
+        return
+
+    for product in products:
+        sku = str(product.get("sku", "")).strip()
+        if sku not in lunch_quantities:
+            continue
+        if "stock" not in product:
+            continue
+        remaining = int(product.get("stock", 0))
+        requested = lunch_quantities[sku]
+        if requested > remaining:
+            raise ValueError(f"Not enough stock for {product.get('name', sku)}. Remaining: {remaining}.")
+
+    for product in products:
+        sku = str(product.get("sku", "")).strip()
+        if sku not in lunch_quantities or "stock" not in product:
+            continue
+        product["stock"] = int(product.get("stock", 0)) - lunch_quantities[sku]
+
+    save_products(products)
 
 
 def list_printers():
@@ -186,6 +258,7 @@ def validate_order(payload):
 
 def create_order(payload):
     order = validate_order(payload)
+    apply_lunch_stock(order["items"])
     order_number = next_order_number()
     created_at = datetime.now().isoformat(timespec="seconds")
     with get_db() as conn:
@@ -222,17 +295,18 @@ def create_order(payload):
         conn.commit()
 
     print_results = []
-    for print_job in build_automatic_print_jobs(order["items"]):
-        print_results.append(
-            run_print_job(
-                print_job=print_job,
-                order_number=order_number,
-                cashier=order["cashier"],
-                note=order["note"],
-                items=order["items"],
-                total=order["total"],
+    if PRINTING_ENABLED:
+        for print_job in build_automatic_print_jobs(order["items"]):
+            print_results.append(
+                run_print_job(
+                    print_job=print_job,
+                    order_number=order_number,
+                    cashier=order["cashier"],
+                    note=order["note"],
+                    items=order["items"],
+                    total=order["total"],
+                )
             )
-        )
 
     order["id"] = order_id
     order["order_number"] = order_number
@@ -579,7 +653,13 @@ class POSRequestHandler(BaseHTTPRequestHandler):
             filename = parsed.path.replace("/static/", "", 1)
             return self.serve_static(filename)
         if parsed.path == "/api/health":
-            return self.send_json({"status": "ok", "shop_name": SHOP_NAME})
+            return self.send_json(
+                {
+                    "status": "ok",
+                    "shop_name": SHOP_NAME,
+                    "printing_enabled": PRINTING_ENABLED,
+                }
+            )
         if parsed.path == "/api/products":
             return self.send_json(list_products())
         if parsed.path == "/api/printers":
@@ -614,7 +694,35 @@ class POSRequestHandler(BaseHTTPRequestHandler):
                     {"error": str(exc)},
                     status=HTTPStatus.BAD_REQUEST,
                 )
+            except Exception as exc:
+                return self.send_json(
+                    {"error": f"Server error: {exc}"},
+                    status=HTTPStatus.INTERNAL_SERVER_ERROR,
+                )
+        if parsed.path == "/api/products/stock":
+            payload = self.read_json_body()
+            try:
+                product = update_product_stock(
+                    sku=payload.get("sku", ""),
+                    stock_value=payload.get("stock"),
+                )
+                return self.send_json(product, status=HTTPStatus.OK)
+            except ValueError as exc:
+                return self.send_json(
+                    {"error": str(exc)},
+                    status=HTTPStatus.BAD_REQUEST,
+                )
+            except Exception as exc:
+                return self.send_json(
+                    {"error": f"Server error: {exc}"},
+                    status=HTTPStatus.INTERNAL_SERVER_ERROR,
+                )
         if parsed.path == "/api/print-test":
+            if not PRINTING_ENABLED:
+                return self.send_json(
+                    {"error": "Printing is disabled on this server."},
+                    status=HTTPStatus.BAD_REQUEST,
+                )
             payload = self.read_json_body()
             printer_id = str(payload.get("printer_id", "")).strip()
             if not printer_id:
@@ -691,6 +799,7 @@ def main():
         server.socket = context.wrap_socket(server.socket, server_side=True)
         scheme = "https"
     print(f"{SHOP_NAME} running on {scheme}://{HOST}:{PORT}")
+    print(f"Printing enabled: {'yes' if PRINTING_ENABLED else 'no'}")
     print(f"Open from another device on your LAN: {scheme}://YOUR-PC-IP:{PORT}")
     try:
         server.serve_forever()

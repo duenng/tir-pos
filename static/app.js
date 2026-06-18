@@ -11,7 +11,25 @@ const state = {
   modifierSelection: {
     temperature: "Hot",
     milk: "",
+    topping: "",
+    dessertOption: "",
+    iceCreamFlavor: "Vanilla",
+    callerNumber: "",
   },
+};
+
+const AUTO_REFRESH_MS = 15000;
+
+const dessertOptionMap = {
+  WAFFLE: [
+    { code: "A", label: "A. 黑糖珍珠芝士奶蓋窩夫", price: 58 },
+    { code: "B", label: "B. 焦糖花生朱古力窩夫", price: 48 },
+    { code: "C", label: "C. 宇治抹茶紅豆窩夫", price: 50 },
+  ],
+  "EGG-WAFFLE": [
+    { code: "D", label: "D. 原味雞蛋仔", price: 20 },
+    { code: "E", label: "E. 朱古力雞蛋仔", price: 28 },
+  ],
 };
 
 function money(value) {
@@ -22,20 +40,30 @@ function uid(prefix = "id") {
   return `${prefix}-${Math.random().toString(16).slice(2, 10)}`;
 }
 
+async function readJsonResponse(response) {
+  const contentType = response.headers.get("content-type") || "";
+  if (!contentType.includes("application/json")) {
+    const text = await response.text();
+    const preview = text.trim().slice(0, 120) || "Empty response";
+    throw new Error(`Server returned non-JSON response: ${preview}`);
+  }
+  return response.json();
+}
+
 async function loadProducts() {
   const response = await fetch("/api/products");
-  state.products = await response.json();
+  state.products = await readJsonResponse(response);
   renderProducts();
 }
 
 async function loadOrders() {
   const response = await fetch("/api/orders?limit=20");
-  state.orders = await response.json();
+  state.orders = await readJsonResponse(response);
   renderOrders();
 }
 
 function addToCart(product) {
-  if (needsDrinkModifier(product)) {
+  if (needsItemModifier(product)) {
     openModifier(product);
     return;
   }
@@ -62,17 +90,91 @@ function addResolvedProductToCart(product) {
   renderCart();
 }
 
+function isLunch(product) {
+  return (product.category || "") === "Lunch";
+}
+
+function hasNoLunchStock(product) {
+  return isLunch(product) && Number.isFinite(Number(product.stock)) && Number(product.stock) <= 0;
+}
+
+function needsItemModifier(product) {
+  return needsDrinkModifier(product) || needsDessertModifier(product) || needsCallerModifier(product);
+}
+
 function needsDrinkModifier(product) {
   return ["Coffee", "Non-Coffee"].includes(product.category || "");
 }
 
+function needsDessertModifier(product) {
+  return Object.prototype.hasOwnProperty.call(dessertOptionMap, product.sku);
+}
+
+function needsCallerModifier(product) {
+  return ["Dessert", "Lunch"].includes(product.category || "");
+}
+
+function modifierMode(product) {
+  if (needsDessertModifier(product)) {
+    return "dessert";
+  }
+  if (needsCallerModifier(product)) {
+    return "caller";
+  }
+  return "drink";
+}
+
+function dessertOptions(product) {
+  return dessertOptionMap[product.sku] || [];
+}
+
+function needsDessertIceCream(product) {
+  return product.sku === "WAFFLE";
+}
+
+function availableTemperatures(product) {
+  const options = [];
+  if (Number.isFinite(Number(product.hot_price))) {
+    options.push("Hot");
+  }
+  if (Number.isFinite(Number(product.iced_price))) {
+    options.push("Iced");
+  }
+  if (!options.length) {
+    options.push("Hot", "Iced");
+  }
+  return options;
+}
+
+function selectedDrinkPrice(product, temperature) {
+  if (temperature === "Iced" && Number.isFinite(Number(product.iced_price))) {
+    return Number(product.iced_price);
+  }
+  if (temperature === "Hot" && Number.isFinite(Number(product.hot_price))) {
+    return Number(product.hot_price);
+  }
+  return Number(product.price || 0);
+}
+
 function openModifier(product) {
+  const temperatures = availableTemperatures(product);
   state.modifierProduct = product;
   state.modifierSelection = {
-    temperature: "Hot",
+    temperature: temperatures[0],
     milk: "",
+    topping: "",
+    dessertOption: dessertOptions(product)[0]?.code || "",
+    iceCreamFlavor: "Vanilla",
+    callerNumber: "",
   };
-  document.getElementById("modifierTitle").textContent = product.name;
+  const mode = modifierMode(product);
+  document.getElementById("modifierEyebrow").textContent = {
+    dessert: "Dessert Modifier",
+    caller: "Caller Modifier",
+    drink: "Drink Modifier",
+  }[mode];
+  const stockSuffix = isLunch(product) && Number.isFinite(Number(product.stock)) ? ` (${product.stock} left)` : "";
+  document.getElementById("modifierTitle").textContent = `${product.name}${stockSuffix}`;
   document.getElementById("modifierModal").classList.remove("hidden");
   document.body.classList.add("sidebar-open");
   renderModifier();
@@ -85,19 +187,102 @@ function closeModifier() {
 }
 
 function modifierExtra() {
+  if (!state.modifierProduct) return 0;
+  if (modifierMode(state.modifierProduct) === "dessert") {
+    return 0;
+  }
   let extra = 0;
-  if (state.modifierSelection.temperature === "Iced") {
+  if (
+    state.modifierSelection.temperature === "Iced" &&
+    !Number.isFinite(Number(state.modifierProduct?.iced_price))
+  ) {
     extra += 2;
   }
   if (["Oat milk", "Soymilk", "Coconutmilk"].includes(state.modifierSelection.milk)) {
     extra += 4;
   }
+  if (["Bubble", "Cheese Foam"].includes(state.modifierSelection.topping)) {
+    extra += 4;
+  }
   return extra;
+}
+
+function selectedDessertOption(product) {
+  return dessertOptions(product).find((option) => option.code === state.modifierSelection.dessertOption) || null;
+}
+
+function selectedModifierPrice(product) {
+  if (modifierMode(product) === "dessert") {
+    return Number(selectedDessertOption(product)?.price || product.price || 0);
+  }
+  return selectedDrinkPrice(product, state.modifierSelection.temperature) + modifierExtra();
 }
 
 function renderModifier() {
   if (!state.modifierProduct) return;
-  document.getElementById("modifierPrice").textContent = money(Number(state.modifierProduct.price || 0) + modifierExtra());
+  const mode = modifierMode(state.modifierProduct);
+  const stockLockedLunch = hasNoLunchStock(state.modifierProduct);
+  document.getElementById("temperatureSection").classList.toggle("hidden-section", mode !== "drink");
+  document.getElementById("milkSection").classList.toggle("hidden-section", mode !== "drink");
+  document.getElementById("toppingSection").classList.toggle("hidden-section", mode !== "drink");
+  document.getElementById("dessertOptionSection").classList.toggle("hidden-section", mode !== "dessert");
+  document.getElementById("iceCreamSection").classList.toggle(
+    "hidden-section",
+    mode !== "dessert" || !needsDessertIceCream(state.modifierProduct)
+  );
+  document.getElementById("callerSection").classList.toggle(
+    "hidden-section",
+    !["dessert", "caller"].includes(mode) || stockLockedLunch
+  );
+  document.getElementById("lunchStockSection").classList.toggle("hidden-section", !isLunch(state.modifierProduct));
+  document.getElementById("modifierAddButton").disabled = stockLockedLunch;
+  document.getElementById("modifierAddButton").classList.toggle("hidden-option", stockLockedLunch);
+  if (isLunch(state.modifierProduct)) {
+    document.getElementById("lunchStockInput").value =
+      Number.isFinite(Number(state.modifierProduct.stock)) ? Number(state.modifierProduct.stock) : "";
+  }
+  if (mode === "dessert") {
+    const title = needsDessertIceCream(state.modifierProduct) ? "Waffle Option" : "Egg Waffle Option";
+    document.getElementById("dessertOptionTitle").textContent = title;
+    const optionsContainer = document.getElementById("dessertOptionButtons");
+    optionsContainer.innerHTML = dessertOptions(state.modifierProduct)
+      .map(
+        (option) => `
+          <button
+            class="modifier-option ${state.modifierSelection.dessertOption === option.code ? "active" : ""}"
+            type="button"
+            data-modifier-group="dessertOption"
+            data-modifier-value="${option.code}"
+          >
+            ${option.label}
+          </button>
+        `
+      )
+      .join("");
+  }
+  if (["dessert", "caller"].includes(mode)) {
+    const callerContainer = document.getElementById("callerButtons");
+    callerContainer.innerHTML = Array.from({ length: 16 }, (_, index) => {
+      const caller = String(index + 1);
+      return `
+        <button
+          class="modifier-option ${state.modifierSelection.callerNumber === caller ? "active" : ""}"
+          type="button"
+          data-modifier-group="callerNumber"
+          data-modifier-value="${caller}"
+        >
+          ${caller}
+        </button>
+      `;
+    }).join("");
+  }
+  const temperatureButtons = Array.from(document.querySelectorAll("[data-modifier-group='temperature']"));
+  const temperatures = availableTemperatures(state.modifierProduct);
+  temperatureButtons.forEach((button) => {
+    button.disabled = !temperatures.includes(button.dataset.modifierValue);
+    button.classList.toggle("hidden-option", button.disabled);
+  });
+  document.getElementById("modifierPrice").textContent = money(selectedModifierPrice(state.modifierProduct));
   Array.from(document.querySelectorAll("[data-modifier-group]")).forEach((button) => {
     const group = button.dataset.modifierGroup;
     const value = button.dataset.modifierValue;
@@ -105,23 +290,74 @@ function renderModifier() {
   });
 }
 
-function addModifierDrinkToCart() {
+function addModifierItemToCart() {
   if (!state.modifierProduct) return;
-  const extra = modifierExtra();
-  const finalPrice = Number(state.modifierProduct.price || 0) + extra;
-  const parts = [state.modifierProduct.name, state.modifierSelection.temperature];
-  if (state.modifierSelection.milk) {
-    parts.push(state.modifierSelection.milk);
+  const mode = modifierMode(state.modifierProduct);
+  const finalPrice = selectedModifierPrice(state.modifierProduct);
+  let parts = [state.modifierProduct.name];
+  if (mode === "dessert") {
+    const selectedOption = selectedDessertOption(state.modifierProduct);
+    parts = [selectedOption?.label || state.modifierProduct.name];
+    if (needsDessertIceCream(state.modifierProduct)) {
+      parts.push(state.modifierSelection.iceCreamFlavor);
+    }
+    if (state.modifierSelection.callerNumber) {
+      parts.push(`CALLER ${state.modifierSelection.callerNumber}`);
+    }
+  } else if (mode === "caller") {
+    parts = [state.modifierProduct.name];
+    if (state.modifierSelection.callerNumber) {
+      parts.push(`CALLER ${state.modifierSelection.callerNumber}`);
+    }
+  } else {
+    parts = [state.modifierProduct.name, state.modifierSelection.temperature];
+    if (state.modifierSelection.milk) {
+      parts.push(state.modifierSelection.milk);
+    }
+    if (state.modifierSelection.topping) {
+      parts.push(state.modifierSelection.topping);
+    }
   }
   const resolved = {
     sku: state.modifierProduct.sku,
-    base_name: state.modifierProduct.name,
+    base_name:
+      (mode === "dessert" ? selectedDessertOption(state.modifierProduct)?.label : state.modifierProduct.name) ||
+      state.modifierProduct.name,
     name: parts.join(" / "),
     category: state.modifierProduct.category,
     price: finalPrice,
   };
   addResolvedProductToCart(resolved);
   closeModifier();
+}
+
+async function saveLunchStock() {
+  if (!state.modifierProduct || !isLunch(state.modifierProduct)) return;
+  const input = document.getElementById("lunchStockInput");
+  const rawValue = input.value.trim();
+  try {
+    const response = await fetch("/api/products/stock", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sku: state.modifierProduct.sku,
+        stock: rawValue === "" ? null : Number(rawValue),
+      }),
+    });
+    const result = await readJsonResponse(response);
+    if (!response.ok) {
+      throw new Error(result.error || "Unable to save stock.");
+    }
+    state.products = state.products.map((product) =>
+      product.sku === result.sku ? result : product
+    );
+    state.modifierProduct = result;
+    showMessage(`Saved stock for ${result.name}.`, "success");
+    renderProducts();
+    renderModifier();
+  } catch (error) {
+    showMessage(error.message, "error");
+  }
 }
 
 function changeQuantity(id, delta) {
@@ -174,11 +410,18 @@ function renderProducts() {
     return;
   }
 
+  container.dataset.category = state.activeCategory;
+
   container.innerHTML = visible
     .map(
       (product, index) => `
-        <button class="product-card" type="button" data-index="${index}">
+        <button class="product-card" type="button" data-index="${index}" data-sku="${product.sku || ""}">
           <span class="product-name">${product.name}</span>
+          ${
+            isLunch(product) && Number.isFinite(Number(product.stock))
+              ? `<span class="product-stock">${product.stock} left</span>`
+              : ""
+          }
         </button>
       `
     )
@@ -279,7 +522,6 @@ function renderCart() {
         <div class="cart-row">
           <div class="cart-main">
             <strong>${item.name}</strong>
-            <div class="muted">${item.sku || "NO-SKU"}</div>
             <div class="cart-line-price">${money(item.price)} each</div>
           </div>
           <div class="cart-qty">
@@ -371,18 +613,19 @@ async function checkout() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-    const result = await response.json();
+    const result = await readJsonResponse(response);
     if (!response.ok) {
       throw new Error(result.error || "Unable to save order.");
     }
 
     state.cart = [];
     renderCart();
+    await loadProducts();
     showMessage(
       `Sent ${result.order.order_number}. ${
         result.print_results.length
           ? result.print_results.map((item) => `${item.printer_name}: ${item.status}`).join(" | ")
-          : "Printed automatically."
+          : "Saved without printing."
       }`,
       "success"
     );
@@ -396,10 +639,14 @@ async function checkout() {
 
 function buildOrderNote() {
   const rawNote = document.getElementById("noteInput").value.trim();
+  const noteParts = [];
   if (state.takeaway) {
-    return rawNote ? `TAKEAWAY | ${rawNote}` : "TAKEAWAY";
+    noteParts.push("TAKEAWAY");
   }
-  return rawNote;
+  if (rawNote) {
+    noteParts.push(rawNote);
+  }
+  return noteParts.join(" | ");
 }
 
 async function testPrinter(printerId) {
@@ -409,7 +656,7 @@ async function testPrinter(printerId) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ printer_id: printerId, copies: 1 }),
     });
-    const result = await response.json();
+    const result = await readJsonResponse(response);
     if (!response.ok) {
       throw new Error(result.error || "Printer test failed.");
     }
@@ -445,12 +692,13 @@ function bindEvents() {
     showMessage("Data refreshed.", "success");
   });
   document.getElementById("modifierCloseButton").addEventListener("click", closeModifier);
-  document.getElementById("modifierAddButton").addEventListener("click", addModifierDrinkToCart);
-  Array.from(document.querySelectorAll("[data-modifier-group]")).forEach((button) => {
-    button.addEventListener("click", () => {
-      state.modifierSelection[button.dataset.modifierGroup] = button.dataset.modifierValue;
-      renderModifier();
-    });
+  document.getElementById("modifierAddButton").addEventListener("click", addModifierItemToCart);
+  document.getElementById("saveLunchStockButton").addEventListener("click", saveLunchStock);
+  document.getElementById("modifierModal").addEventListener("click", (event) => {
+    const button = event.target.closest("[data-modifier-group]");
+    if (!button) return;
+    state.modifierSelection[button.dataset.modifierGroup] = button.dataset.modifierValue;
+    renderModifier();
   });
   document.getElementById("searchInput").addEventListener("input", () => {
     state.menuPage = 0;
@@ -464,6 +712,9 @@ async function init() {
   setSidebar(false);
   await Promise.all([loadProducts(), loadOrders()]);
   renderCart();
+  window.setInterval(() => {
+    Promise.all([loadProducts(), loadOrders()]).catch((error) => showMessage(error.message, "error"));
+  }, AUTO_REFRESH_MS);
 }
 
 init().catch((error) => showMessage(error.message, "error"));

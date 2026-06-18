@@ -31,6 +31,14 @@ POS_SHOP_NAME="My Shop"
 python3 app.py
 ```
 
+To run at home without trying to reach the shop printers:
+
+```bash
+POS_PRINTING_ENABLED=0 python3 app.py
+```
+
+When printing is disabled, orders are still saved normally and checkout will confirm that the order was saved without printing.
+
 ## Printer setup
 
 Edit [data/printers.json](/Users/duenng/Documents/GitHub/tir-pos/data/printers.json) and replace the sample IP addresses with your real printer IPs.
@@ -48,6 +56,7 @@ For your current setup:
 - `Label Printer` at `192.168.1.143` uses `zpl`
 
 Most LAN receipt printers listen on raw TCP port `9100`. If your printers use another port, change `port`.
+If you are away from the shop network, either disable printing with `POS_PRINTING_ENABLED=0` or update the printer IPs to devices reachable from the current LAN.
 
 ## Product setup
 
