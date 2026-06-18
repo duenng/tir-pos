@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Emergency POS</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <div id="modifierModal" class="modifier-modal hidden">
+        <div class="modifier-dialog">
+          <div class="modifier-head">
+            <div>
+              <p class="eyebrow">Drink Modifier</p>
+              <h2 id="modifierTitle">Customize Drink</h2>
+            </div>
+            <button id="modifierCloseButton" class="ghost-button small-button" type="button">
+              Close
+            </button>
+          </div>
+
+          <div class="modifier-section">
+            <h3>Temperature</h3>
+            <div class="modifier-options">
+              <button class="modifier-option active" type="button" data-modifier-group="temperature" data-modifier-value="Hot">
+                Hot
+              </button>
+              <button class="modifier-option" type="button" data-modifier-group="temperature" data-modifier-value="Iced">
+                Iced +$2
+              </button>
+            </div>
+          </div>
+
+          <div class="modifier-section">
+            <h3>Milk</h3>
+            <div class="modifier-options milk-options">
+              <button class="modifier-option active" type="button" data-modifier-group="milk" data-modifier-value="">
+                No milk choice
+              </button>
+              <button class="modifier-option" type="button" data-modifier-group="milk" data-modifier-value="Oat milk">
+                Oat milk +$4
+              </button>
+              <button class="modifier-option" type="button" data-modifier-group="milk" data-modifier-value="Soymilk">
+                Soymilk +$4
+              </button>
+              <button class="modifier-option" type="button" data-modifier-group="milk" data-modifier-value="Coconutmilk">
+                Coconutmilk +$4
+              </button>
+              <button class="modifier-option" type="button" data-modifier-group="milk" data-modifier-value="Skimmed milk">
+                Skimmed milk
+              </button>
+            </div>
+          </div>
+
+          <div class="modifier-footer">
+            <div class="modifier-total">
+              <span>Drink Price</span>
+              <strong id="modifierPrice">$0.00</strong>
+            </div>
+            <button id="modifierAddButton" class="primary-button" type="button">
+              Add Drink
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <aside id="sidebar" class="sidebar">
+        <div class="sidebar-card">
+          <div class="sidebar-head">
+            <div>
+              <p class="eyebrow">Utility Panel</p>
+              <h2>Shop Tools</h2>
+            </div>
+            <button id="sidebarCloseButton" class="ghost-button icon-button" type="button">
+              Close
+            </button>
+          </div>
+
+          <div class="sidebar-section">
+            <button id="refreshButton" class="ghost-button sidebar-button" type="button">
+              Refresh Data
+            </button>
+            <a class="secondary-button sidebar-button" href="/api/orders.csv">Export CSV</a>
+          </div>
+
+          <div class="sidebar-section">
+            <h3>Order Info</h3>
+            <label>
+              Cashier
+              <input id="cashierInput" type="text" placeholder="Staff name" />
+            </label>
+            <label>
+              Note
+              <textarea id="noteInput" rows="3" placeholder="Special note"></textarea>
+            </label>
+          </div>
+
+          <div class="sidebar-section">
+            <div class="section-line">
+              <h3>Recent Orders</h3>
+              <button id="reloadOrdersButton" class="ghost-button small-button" type="button">
+                Reload
+              </button>
+            </div>
+            <div id="ordersList" class="orders-list empty-state">No sales yet.</div>
+          </div>
+        </div>
+      </aside>
+
+    <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
+
+      <div class="content-shell">
+        <header class="topbar">
+          <div class="topbar-left">
+            <button id="sidebarOpenButton" class="ghost-button icon-button" type="button">
+              <span class="hamburger-icon" aria-hidden="true">
+                <span></span>
+                <span></span>
+                <span></span>
+              </span>
+              <span class="sr-only">Open menu</span>
+            </button>
+            <div>
+              <p class="eyebrow">Counter POS</p>
+              <h1>New Order</h1>
+            </div>
+          </div>
+        </header>
+
+        <main class="grid">
+          <section class="panel cart-panel">
+            <div class="order-summary-bar">
+              <div>
+                <span class="summary-label">Order Total</span>
+                <strong id="headerSubtotalValue">$0.00</strong>
+              </div>
+            </div>
+
+            <div class="order-mode-switch" role="group" aria-label="Order mode">
+              <button id="dineInButton" class="mode-button active" type="button">Dine-in</button>
+              <button id="takeawayButton" class="mode-button" type="button">Takeaway</button>
+            </div>
+
+            <div class="panel-heading cart-heading">
+              <div>
+                <h2>Current Order</h2>
+                <p class="section-copy">Review items before sending the order.</p>
+              </div>
+              <span id="cartCount" class="pill">0 items</span>
+            </div>
+
+            <div id="cartItems" class="cart-items empty-state">
+              No items yet.
+            </div>
+
+            <div class="checkout-box">
+              <div class="totals">
+                <span>Subtotal</span>
+                <strong id="subtotalValue">$0.00</strong>
+              </div>
+
+              <div class="checkout-actions">
+                <button id="clearCartButton" class="ghost-button checkout-button" type="button">
+                  Clear
+                </button>
+                <button id="checkoutButton" class="primary-button checkout-button" type="button">
+                  Send Order
+                </button>
+              </div>
+              <div id="messageBox" class="message-box"></div>
+            </div>
+          </section>
+
+          <section class="panel menu-panel">
+            <div class="menu-topline">
+              <div class="panel-heading menu-heading">
+                <div>
+                  <h2>Menu</h2>
+                  <p class="section-copy">Tap an item to add it straight into the cart.</p>
+                </div>
+                <input id="searchInput" type="search" placeholder="Search menu" />
+              </div>
+            </div>
+
+            <div id="categoryBar" class="category-bar"></div>
+            <div id="productsGrid" class="products-grid"></div>
+            <div id="menuPager" class="menu-pager"></div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+  </body>
+  </html>

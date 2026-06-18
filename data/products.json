@@ -1,0 +1,26 @@
+[
+  {
+    "sku": "AMERICANO",
+    "name": "Americano",
+    "category": "Coffee",
+    "price": 26
+  },
+  {
+    "sku": "NONCOF-PLACEHOLDER",
+    "name": "Coming Soon",
+    "category": "Non-Coffee",
+    "price": 0
+  },
+  {
+    "sku": "DESSERT-PLACEHOLDER",
+    "name": "Coming Soon",
+    "category": "Dessert",
+    "price": 0
+  },
+  {
+    "sku": "LUNCH-PLACEHOLDER",
+    "name": "Coming Soon",
+    "category": "Lunch",
+    "price": 0
+  }
+]
