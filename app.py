@@ -709,7 +709,7 @@ def export_orders_csv():
 
 
 class POSRequestHandler(BaseHTTPRequestHandler):
-    server_version = "EmergencyPOS/0.1"
+    server_version = "TheInfinityRoomPOS/0.1"
 
     def do_GET(self):
         parsed = urlparse(self.path)

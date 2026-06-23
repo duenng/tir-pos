@@ -1,4 +1,4 @@
-# Emergency POS
+# The Infinity Room POS
 
 Small LAN-only POS for short-term fallback use. It runs on one computer in the shop, stores sales in SQLite, and can send raw `ESC/POS` print jobs to network printers over the local network.
 
@@ -74,7 +74,7 @@ Example:
 
 ## Notes
 
-- This is designed as a simple emergency fallback for your final 3 days.
+- This is designed as a simple cy fallback for your final 3 days.
 - It does not depend on the internet. It only needs your local network.
 - Orders stay on the computer that runs `app.py`.
 - Use the printer `Test` button in the UI to confirm each printer is reachable.
