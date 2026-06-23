@@ -23,6 +23,36 @@ const state = {
 };
 
 const AUTO_REFRESH_MS = 15000;
+const DEMO_MODE =
+  window.location.protocol === "file:" ||
+  window.location.hostname.endsWith(".github.io") ||
+  new URLSearchParams(window.location.search).get("demo") === "1";
+
+const DEMO_PRODUCTS = [
+  { sku: "AMERICANO", name: "Americano", category: "Coffee", price: 26, hot_price: 26, iced_price: 28 },
+  { sku: "LATTE", name: "Latte", category: "Coffee", price: 33, hot_price: 33, iced_price: 35 },
+  { sku: "MATCHA-LATTE", name: "Matcha Latte", category: "Non-Coffee", price: 31, hot_price: 31, iced_price: 33 },
+  { sku: "HONEY-LEMON-SODA", name: "Honey Lemon Soda", category: "Non-Coffee", price: 33, iced_price: 33 },
+  { sku: "EGG-WAFFLE", name: "雞蛋仔", category: "Dessert", price: 0 },
+  { sku: "WAFFLE", name: "窩夫", category: "Dessert", price: 0 },
+  { sku: "BASQUE-CHEESECAKE", name: "巴斯克蛋糕", category: "Dessert", price: 30 },
+  { sku: "PISTACHIO-BASQUE-CHEESECAKE", name: "開心果巴斯克蛋糕", category: "Dessert", price: 38 },
+  { sku: "BOLOGNESE-LASAGNA", name: "肉醬千層麵", category: "Lunch", price: 62, stock: 44 },
+  { sku: "BEEF-TRUFFLE-EGGWHITE-RICE", name: "肥牛黑松露炒蛋白飯", category: "Lunch", price: 58, stock: 19 },
+];
+
+const DEMO_ORDERS = [
+  {
+    id: 1,
+    order_number: "20260624-0001",
+    cashier: "Demo Staff",
+    note: "PAYMENT CASH",
+    subtotal: 62,
+    total: 62,
+    created_at: "2026-06-24T12:30:00",
+    items: [{ sku: "BOLOGNESE-LASAGNA", name: "肉醬千層麵", price: 62, quantity: 1, line_total: 62 }],
+  },
+];
 
 const dessertOptionMap = {
   WAFFLE: [
@@ -69,12 +99,22 @@ async function readJsonResponse(response) {
 }
 
 async function loadProducts() {
+  if (DEMO_MODE) {
+    state.products = DEMO_PRODUCTS.map((item) => ({ ...item }));
+    renderProducts();
+    return;
+  }
   const response = await fetch("/api/products");
   state.products = await readJsonResponse(response);
   renderProducts();
 }
 
 async function loadOrders() {
+  if (DEMO_MODE) {
+    state.orders = DEMO_ORDERS.map((order) => ({ ...order, items: order.items.map((item) => ({ ...item })) }));
+    renderOrders();
+    return;
+  }
   const response = await fetch("/api/orders?limit=20");
   state.orders = await readJsonResponse(response);
   renderOrders();
@@ -401,6 +441,17 @@ async function saveLunchStock() {
   if (!state.modifierProduct || !isLunch(state.modifierProduct)) return;
   const input = document.getElementById("lunchStockInput");
   const rawValue = input.value.trim();
+  if (DEMO_MODE) {
+    const nextStock = rawValue === "" ? null : Number(rawValue);
+    state.products = state.products.map((product) =>
+      product.sku === state.modifierProduct.sku ? { ...product, stock: nextStock } : product
+    );
+    state.modifierProduct = state.products.find((product) => product.sku === state.modifierProduct.sku);
+    showMessage(`Saved stock for ${state.modifierProduct.name}.`, "success");
+    renderProducts();
+    renderModifier();
+    return;
+  }
   try {
     const response = await fetch("/api/products/stock", {
       method: "POST",
@@ -692,6 +743,30 @@ async function checkout() {
   const button = document.getElementById("checkoutButton");
   button.disabled = true;
 
+  if (DEMO_MODE) {
+    const subtotal = state.cart.reduce((sum, item) => sum + cartItemUnitPrice(item) * item.quantity, 0);
+    const total = Math.max(0, subtotal - comboDiscountFromItems(state.cart));
+    state.orders.unshift({
+      id: Date.now(),
+      order_number: `DEMO-${String(state.orders.length + 1).padStart(4, "0")}`,
+      cashier: payload.cashier || "Demo Staff",
+      note: payload.note,
+      subtotal,
+      total,
+      created_at: new Date().toISOString().slice(0, 19),
+      items: payload.items.map((item) => ({
+        ...item,
+        line_total: Number(item.price) * Number(item.quantity),
+      })),
+    });
+    state.cart = [];
+    renderCart();
+    renderOrders();
+    showMessage("Demo order saved locally.", "success");
+    button.disabled = false;
+    return;
+  }
+
   try {
     const response = await fetch("/api/orders", {
       method: "POST",
@@ -738,6 +813,10 @@ function buildOrderNote() {
 }
 
 async function testPrinter(printerId) {
+  if (DEMO_MODE) {
+    showMessage(`Demo mode: printer test for ${printerId} skipped.`, "success");
+    return;
+  }
   try {
     const response = await fetch("/api/print-test", {
       method: "POST",
@@ -808,6 +887,10 @@ async function init() {
   setSidebar(false);
   await Promise.all([loadProducts(), loadOrders()]);
   renderCart();
+  if (DEMO_MODE) {
+    showMessage("Static demo mode active.", "success");
+    return;
+  }
   window.setInterval(() => {
     Promise.all([loadProducts(), loadOrders()]).catch((error) => showMessage(error.message, "error"));
   }, AUTO_REFRESH_MS);
