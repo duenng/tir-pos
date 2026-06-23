@@ -871,6 +871,16 @@ function showMessage(message, tone = "success") {
   box.className = `message-box ${tone}`;
 }
 
+function fitPosStage() {
+  const shell = document.getElementById("contentShell");
+  if (!shell) return;
+  const stagePadding = window.innerWidth <= 1100 ? 24 : 36;
+  const availableWidth = Math.max(320, window.innerWidth - stagePadding);
+  const availableHeight = Math.max(320, window.innerHeight - stagePadding);
+  const scale = Math.min(availableWidth / 1024, availableHeight / 768, 1);
+  shell.style.transform = `scale(${scale})`;
+}
+
 function bindEvents() {
   document.getElementById("searchInput").addEventListener("input", renderProducts);
   document.getElementById("checkoutButton").addEventListener("click", checkout);
@@ -917,6 +927,9 @@ function bindEvents() {
 async function init() {
   bindEvents();
   setSidebar(false);
+  fitPosStage();
+  window.addEventListener("resize", fitPosStage);
+  window.addEventListener("orientationchange", fitPosStage);
   await Promise.all([loadProducts(), loadOrders()]);
   renderCart();
   if (DEMO_MODE) {

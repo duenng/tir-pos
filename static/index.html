@@ -211,89 +211,91 @@
 
     <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
 
-      <div class="content-shell">
-        <header class="topbar">
-          <div class="topbar-left">
-            <button id="sidebarOpenButton" class="ghost-button icon-button" type="button">
-              <span class="hamburger-icon" aria-hidden="true">
-                <span></span>
-                <span></span>
-                <span></span>
-              </span>
-              <span class="sr-only">Open menu</span>
-            </button>
-            <div>
-              <p class="eyebrow">Counter POS</p>
-              <h1>New Order</h1>
-            </div>
-          </div>
-        </header>
-
-        <main class="grid">
-          <section class="panel cart-panel">
-            <div class="order-summary-bar">
+      <div class="pos-stage">
+        <div id="contentShell" class="content-shell">
+          <header class="topbar">
+            <div class="topbar-left">
+              <button id="sidebarOpenButton" class="ghost-button icon-button" type="button">
+                <span class="hamburger-icon" aria-hidden="true">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </span>
+                <span class="sr-only">Open menu</span>
+              </button>
               <div>
-                <span class="summary-label">Order Total</span>
-                <strong id="headerSubtotalValue">$0.00</strong>
+                <p class="eyebrow">Counter POS</p>
+                <h1>New Order</h1>
               </div>
             </div>
+          </header>
 
-            <div class="order-mode-switch" role="group" aria-label="Order mode">
-              <button id="dineInButton" class="mode-button active" type="button">Dine-in</button>
-              <button id="takeawayButton" class="mode-button" type="button">Takeaway</button>
-            </div>
-
-            <div class="panel-heading cart-heading">
-              <div>
-                <h2>Current Order</h2>
-                <p class="section-copy">Review items before sending the order.</p>
-              </div>
-              <span id="cartCount" class="pill">0 items</span>
-            </div>
-
-            <div id="cartItems" class="cart-items empty-state">
-              No items yet.
-            </div>
-
-            <div class="checkout-box">
-              <div class="totals">
-                <span>Subtotal</span>
-                <strong id="subtotalValue">$0.00</strong>
-              </div>
-
-              <div class="order-mode-switch payment-mode-switch" role="group" aria-label="Payment method">
-                <button id="cashPaymentButton" class="mode-button active" type="button">Cash</button>
-                <button id="epaymentButton" class="mode-button" type="button">E-payment</button>
-              </div>
-
-              <div class="checkout-actions">
-                <button id="clearCartButton" class="ghost-button checkout-button" type="button">
-                  Clear
-                </button>
-                <button id="checkoutButton" class="primary-button checkout-button" type="button">
-                  Send Order
-                </button>
-              </div>
-              <div id="messageBox" class="message-box"></div>
-            </div>
-          </section>
-
-          <section class="panel menu-panel">
-            <div class="menu-topline">
-              <div class="panel-heading menu-heading">
+          <main class="grid">
+            <section class="panel cart-panel">
+              <div class="order-summary-bar">
                 <div>
-                  <h2>Menu</h2>
-                  <p class="section-copy">Tap an item to add it straight into the cart.</p>
+                  <span class="summary-label">Order Total</span>
+                  <strong id="headerSubtotalValue">$0.00</strong>
                 </div>
-                <input id="searchInput" type="search" placeholder="Search menu" />
               </div>
-            </div>
 
-            <div id="categoryBar" class="category-bar"></div>
-            <div id="productsGrid" class="products-grid"></div>
-            <div id="menuPager" class="menu-pager"></div>
-          </section>
-        </main>
+              <div class="order-mode-switch" role="group" aria-label="Order mode">
+                <button id="dineInButton" class="mode-button active" type="button">Dine-in</button>
+                <button id="takeawayButton" class="mode-button" type="button">Takeaway</button>
+              </div>
+
+              <div class="panel-heading cart-heading">
+                <div>
+                  <h2>Current Order</h2>
+                  <p class="section-copy">Review items before sending the order.</p>
+                </div>
+                <span id="cartCount" class="pill">0 items</span>
+              </div>
+
+              <div id="cartItems" class="cart-items empty-state">
+                No items yet.
+              </div>
+
+              <div class="checkout-box">
+                <div class="totals">
+                  <span>Subtotal</span>
+                  <strong id="subtotalValue">$0.00</strong>
+                </div>
+
+                <div class="order-mode-switch payment-mode-switch" role="group" aria-label="Payment method">
+                  <button id="cashPaymentButton" class="mode-button active" type="button">Cash</button>
+                  <button id="epaymentButton" class="mode-button" type="button">E-payment</button>
+                </div>
+
+                <div class="checkout-actions">
+                  <button id="clearCartButton" class="ghost-button checkout-button" type="button">
+                    Clear
+                  </button>
+                  <button id="checkoutButton" class="primary-button checkout-button" type="button">
+                    Send Order
+                  </button>
+                </div>
+                <div id="messageBox" class="message-box"></div>
+              </div>
+            </section>
+
+            <section class="panel menu-panel">
+              <div class="menu-topline">
+                <div class="panel-heading menu-heading">
+                  <div>
+                    <h2>Menu</h2>
+                    <p class="section-copy">Tap an item to add it straight into the cart.</p>
+                  </div>
+                  <input id="searchInput" type="search" placeholder="Search menu" />
+                </div>
+              </div>
+
+              <div id="categoryBar" class="category-bar"></div>
+              <div id="productsGrid" class="products-grid"></div>
+              <div id="menuPager" class="menu-pager"></div>
+            </section>
+          </main>
+        </div>
       </div>
     </div>
 
