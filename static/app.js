@@ -5,7 +5,7 @@ const state = {
   activeCategory: "Coffee",
   sidebarOpen: true,
   menuPage: 0,
-  pageSize: 30,
+  pageSize: 20,
   takeaway: false,
   paymentMethod: "Cash",
   modifierProduct: null,
@@ -31,14 +31,46 @@ const DEMO_MODE =
 const DEMO_PRODUCTS = [
   { sku: "AMERICANO", name: "Americano", category: "Coffee", price: 26, hot_price: 26, iced_price: 28 },
   { sku: "LATTE", name: "Latte", category: "Coffee", price: 33, hot_price: 33, iced_price: 35 },
+  { sku: "CAPP", name: "Capp", category: "Coffee", price: 33, hot_price: 33, iced_price: 35 },
+  { sku: "FLAT-WHITE", name: "Flat White", category: "Coffee", price: 36, hot_price: 36 },
+  { sku: "MOCHA", name: "Mocha", category: "Coffee", price: 36, hot_price: 36, iced_price: 38 },
+  { sku: "CARAMEL-MACCHIATO", name: "Caramel Macciato", category: "Coffee", price: 36, hot_price: 36, iced_price: 38 },
+  { sku: "HAZELNUT-LATTE", name: "Hazelnut Latte", category: "Coffee", price: 36, hot_price: 36, iced_price: 38 },
+  { sku: "VANILLA-LATTE", name: "Vanilla Latte", category: "Coffee", price: 36, hot_price: 36, iced_price: 38 },
+  { sku: "CREME-BRULEE", name: "Creme Brulee", category: "Coffee", price: 39, hot_price: 39 },
+  { sku: "ESPRESSO", name: "Espresso", category: "Coffee", price: 24, hot_price: 24 },
+  { sku: "ESPRESSO-TONIC", name: "Espresso Tonic", category: "Coffee", price: 37, iced_price: 37 },
+  { sku: "COCONUT-AMERICANO", name: "Coconut Americano", category: "Coffee", price: 37, iced_price: 37 },
+  { sku: "COCONUT-LATTE", name: "Coconut Latte", category: "Coffee", price: 39, iced_price: 39 },
+  { sku: "HAND-DRIP", name: "Hand Drip", category: "Coffee", price: 32, hot_price: 32 },
+  { sku: "AFFOGATO", name: "Affogato", category: "Coffee", price: 34, iced_price: 34 },
+  { sku: "COLD-BREW", name: "Cold Brew", category: "Coffee", price: 35, iced_price: 35 },
+  { sku: "MONT-BLANC", name: "Mont Blanc", category: "Coffee", price: 40, iced_price: 40 },
+  { sku: "COLD-BREW-ROMANO", name: "Cold Brew Romano", category: "Coffee", price: 40, iced_price: 40 },
   { sku: "MATCHA-LATTE", name: "Matcha Latte", category: "Non-Coffee", price: 31, hot_price: 31, iced_price: 33 },
+  { sku: "OSMANTHUS-OOLONG", name: "Osmanthus Oolong", category: "Non-Coffee", price: 26, hot_price: 26, iced_price: 26 },
+  { sku: "GREEN-TEA", name: "Green Tea", category: "Non-Coffee", price: 26, iced_price: 26 },
+  { sku: "ORANGE-GREEN-TEA", name: "Orange Green Tea", category: "Non-Coffee", price: 29, iced_price: 29 },
+  { sku: "MATCHA-RED-BEAN", name: "Matcha Latte with Red Beans", category: "Non-Coffee", price: 33, hot_price: 33, iced_price: 35 },
+  { sku: "GENMAICHA-LATTE", name: "Genmaicha Latte", category: "Non-Coffee", price: 31, hot_price: 31, iced_price: 33 },
+  { sku: "HOJICHA-LATTE", name: "Hojicha Latte", category: "Non-Coffee", price: 31, hot_price: 31, iced_price: 33 },
+  { sku: "MATCHAGATO", name: "Matchagato", category: "Non-Coffee", price: 34, iced_price: 34 },
+  { sku: "BROWN-SUGAR-BOBA", name: "Brown Sugar Boba", category: "Non-Coffee", price: 32, iced_price: 32 },
+  { sku: "FROTHY-CHOCOLATE", name: "Frothy Chocolate", category: "Non-Coffee", price: 29, hot_price: 29, iced_price: 31 },
+  { sku: "LONDON-FOG-LATTE", name: "London Fog Latte", category: "Non-Coffee", price: 36, hot_price: 36, iced_price: 38 },
   { sku: "HONEY-LEMON-SODA", name: "Honey Lemon Soda", category: "Non-Coffee", price: 33, iced_price: 33 },
+  { sku: "CREAM-SODA", name: "Cream Soda", category: "Non-Coffee", price: 38, iced_price: 38 },
   { sku: "EGG-WAFFLE", name: "雞蛋仔", category: "Dessert", price: 0 },
   { sku: "WAFFLE", name: "窩夫", category: "Dessert", price: 0 },
   { sku: "BASQUE-CHEESECAKE", name: "巴斯克蛋糕", category: "Dessert", price: 30 },
   { sku: "PISTACHIO-BASQUE-CHEESECAKE", name: "開心果巴斯克蛋糕", category: "Dessert", price: 38 },
   { sku: "BOLOGNESE-LASAGNA", name: "肉醬千層麵", category: "Lunch", price: 62, stock: 44 },
   { sku: "BEEF-TRUFFLE-EGGWHITE-RICE", name: "肥牛黑松露炒蛋白飯", category: "Lunch", price: 58, stock: 19 },
+  { sku: "BEEF-TRUFFLE-SCRAMBLED-UDON", name: "肥牛黑松露炒蛋烏冬", category: "Lunch", price: 58, stock: 20 },
+  { sku: "YAM-CHICKEN-RICE", name: "山承咖哩雞飯", category: "Lunch", price: 52, stock: 20 },
+  { sku: "YAM-CHICKEN-UDON", name: "山承咖哩雞讚岐烏冬", category: "Lunch", price: 52, stock: 20 },
+  { sku: "PORK-CARTILAGE-BRAISED-EGG-RICE", name: "豬軟骨滷蛋飯", category: "Lunch", price: 58, stock: 20 },
+  { sku: "PORK-CARTILAGE-BRAISED-EGG-UDON", name: "豬軟骨滷蛋讚岐烏冬", category: "Lunch", price: 58, stock: 20 },
 ];
 
 const DEMO_ORDERS = [
@@ -528,6 +560,7 @@ function renderProducts() {
   }
 
   container.dataset.category = state.activeCategory;
+  container.classList.toggle("products-grid-compact", visible.length <= 4);
 
   container.innerHTML = visible
     .map(
