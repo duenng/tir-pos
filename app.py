@@ -20,7 +20,7 @@ PRODUCTS_PATH = DATA_DIR / "products.json"
 PRINTERS_PATH = DATA_DIR / "printers.json"
 HOST = os.environ.get("POS_HOST", "0.0.0.0")
 PORT = int(os.environ.get("POS_PORT", "8787"))
-SHOP_NAME = os.environ.get("POS_SHOP_NAME", "Emergency POS")
+SHOP_NAME = os.environ.get("POS_SHOP_NAME", "The Infinity Room")
 RECEIPT_SHOP_NAME = os.environ.get("POS_RECEIPT_SHOP_NAME", "The Infinity Room")
 SSL_CERT_FILE = os.environ.get("POS_SSL_CERT")
 SSL_KEY_FILE = os.environ.get("POS_SSL_KEY")
@@ -715,6 +715,8 @@ class POSRequestHandler(BaseHTTPRequestHandler):
         parsed = urlparse(self.path)
         if parsed.path == "/":
             return self.serve_static("index.html")
+        if parsed.path in {"/styles.css", "/app.js"}:
+            return self.serve_static(parsed.path.lstrip("/"))
         if parsed.path.startswith("/static/"):
             filename = parsed.path.replace("/static/", "", 1)
             return self.serve_static(filename)
