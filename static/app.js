@@ -12,8 +12,8 @@ const state = {
   modifierSelection: {
     temperature: "Hot",
     milk: "",
-    sugar: "No sugar",
-    iceLevel: "No ice",
+    sugar: "",
+    iceLevel: "",
     topping: "",
     caramelCrust: "",
     dessertOption: "",
@@ -270,8 +270,8 @@ function openModifier(product) {
   state.modifierSelection = {
     temperature: temperatures[0],
     milk: "",
-    sugar: "No sugar",
-    iceLevel: "No ice",
+    sugar: "",
+    iceLevel: "",
     topping: "",
     caramelCrust: "",
     dessertOption: dessertOptions(product)[0]?.code || "",
@@ -341,6 +341,7 @@ function renderModifier() {
   if (!state.modifierProduct) return;
   const mode = modifierMode(state.modifierProduct);
   const stockLockedLunch = hasNoLunchStock(state.modifierProduct);
+  const showDessertOptions = mode === "dessert" && dessertOptionList.length > 1;
   document.getElementById("temperatureSection").classList.toggle("hidden-section", mode !== "drink");
   document.getElementById("milkSection").classList.toggle("hidden-section", mode !== "drink");
   document.getElementById("sugarSection").classList.toggle("hidden-section", mode !== "drink");
@@ -353,7 +354,7 @@ function renderModifier() {
     "hidden-section",
     mode !== "dessert" || !needsCakeCaramelCrust(state.modifierProduct)
   );
-  document.getElementById("dessertOptionSection").classList.toggle("hidden-section", mode !== "dessert");
+  document.getElementById("dessertOptionSection").classList.toggle("hidden-section", !showDessertOptions);
   document.getElementById("iceCreamSection").classList.toggle(
     "hidden-section",
     mode !== "dessert" || !needsDessertIceCream(state.modifierProduct)
@@ -373,7 +374,7 @@ function renderModifier() {
     const title = "Options";
     document.getElementById("dessertOptionTitle").textContent = title;
     const optionsContainer = document.getElementById("dessertOptionButtons");
-    optionsContainer.innerHTML = dessertOptions(state.modifierProduct)
+    optionsContainer.innerHTML = dessertOptionList
       .map(
         (option) => `
           <button
