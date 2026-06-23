@@ -60,14 +60,16 @@ textarea {
 }
 
 .modifier-dialog {
-  width: min(760px, calc(100vw - 32px));
+  width: min(720px, calc(100vw - 24px));
+  max-height: min(92vh, 980px);
   background: #fffaf4;
   border: 1px solid var(--line);
   border-radius: 24px;
   box-shadow: var(--shadow);
-  padding: 18px;
+  padding: 14px;
   display: grid;
-  gap: 16px;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 12px;
 }
 
 .modifier-head,
@@ -78,9 +80,17 @@ textarea {
   gap: 14px;
 }
 
-.modifier-section {
+.modifier-body {
+  min-height: 0;
+  overflow: auto;
+  padding-right: 4px;
   display: grid;
   gap: 10px;
+}
+
+.modifier-section {
+  display: grid;
+  gap: 6px;
 }
 
 .modifier-section.hidden-section {
@@ -90,7 +100,7 @@ textarea {
 .modifier-options {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px;
 }
 
 .milk-options {
@@ -114,12 +124,15 @@ textarea {
 }
 
 .modifier-option {
-  min-height: 56px;
-  border-radius: 16px;
+  min-height: 44px;
+  padding: 8px 10px;
+  border-radius: 12px;
   border: 1px solid var(--line);
   background: #fff;
   color: var(--ink);
   font-weight: 700;
+  font-size: 0.94rem;
+  line-height: 1.15;
   cursor: pointer;
 }
 
@@ -543,6 +556,10 @@ label {
   border-radius: 999px;
   overflow: hidden;
   background: #f5ebdf;
+}
+
+.payment-mode-switch {
+  margin: 10px 0 0;
 }
 
 .mode-button {

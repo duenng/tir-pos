@@ -98,7 +98,7 @@
   },
   {
     "sku": "HAND-DRIP",
-    "name": "\u624b\u6c96\u5496\u5561",
+    "name": "Hand Drip",
     "category": "Coffee",
     "price": 0
   },
@@ -118,21 +118,21 @@
   },
   {
     "sku": "ORANGE-MILK-FOAM",
-    "name": "\u6a59\u9999\u5976\u84cb",
+    "name": "Mont Blanc",
     "category": "Coffee",
     "price": 40,
     "iced_price": 40
   },
   {
     "sku": "SICILY-COFFEE",
-    "name": "\u897f\u897f\u91cc\u5496\u5561",
+    "name": "Cold Brew Romano",
     "category": "Coffee",
     "price": 40,
     "iced_price": 40
   },
   {
     "sku": "OSMANTHUS-OOLONG",
-    "name": "\u6842\u82b1\u70cf\u9f8d",
+    "name": "Osmanthus Oolong",
     "category": "Non-Coffee",
     "price": 26,
     "hot_price": 26,
@@ -140,21 +140,21 @@
   },
   {
     "sku": "JASMINE-GREEN-TEA",
-    "name": "\u8309\u8389\u7da0\u8336",
+    "name": "Green Tea",
     "category": "Non-Coffee",
     "price": 26,
     "iced_price": 26
   },
   {
     "sku": "CITRUS-GREEN-TEA",
-    "name": "\u9999\u6a59\u7da0\u8336",
+    "name": "Orange Green Tea",
     "category": "Non-Coffee",
     "price": 29,
     "iced_price": 29
   },
   {
     "sku": "MATCHA-FRESH-MILK-UJI",
-    "name": "\u5b87\u6cbb\u62b9\u8336\u9bae\u5976",
+    "name": "Matcha Latte",
     "category": "Non-Coffee",
     "price": 31,
     "hot_price": 31,
@@ -162,7 +162,7 @@
   },
   {
     "sku": "MATCHA-RED-BEAN-MILK-UJI",
-    "name": "\u5b87\u6cbb\u62b9\u8336\u7d05\u8c46\u9bae\u5976",
+    "name": "Matcha Latte with Red Beans",
     "category": "Non-Coffee",
     "price": 33,
     "hot_price": 33,
@@ -170,7 +170,7 @@
   },
   {
     "sku": "BROWN-RICE-TEA-MILK",
-    "name": "\u7384\u7c73\u8336\u9bae\u5976",
+    "name": "Genmaicha Latte",
     "category": "Non-Coffee",
     "price": 31,
     "hot_price": 31,
@@ -178,7 +178,7 @@
   },
   {
     "sku": "HOJICHA-MILK",
-    "name": "\u7119\u8336\u9bae\u5976",
+    "name": "Hojicha Latte",
     "category": "Non-Coffee",
     "price": 31,
     "hot_price": 31,
@@ -186,21 +186,21 @@
   },
   {
     "sku": "MATCHAGO",
-    "name": "\u62b9\u8336\u963f\u8299\u4f73\u6735",
+    "name": "Matchagato",
     "category": "Non-Coffee",
     "price": 34,
     "iced_price": 34
   },
   {
     "sku": "BROWN-SUGAR-BOBA-MILK",
-    "name": "\u9ed1\u7cd6\u73cd\u73e0\u9bae\u5976",
+    "name": "Brown Sugar Boba",
     "category": "Non-Coffee",
     "price": 32,
     "iced_price": 32
   },
   {
     "sku": "CHOCOLATE-FRAPPE",
-    "name": "\u6ce1\u6cab\u6731\u53e4\u529b",
+    "name": "Frothy Chololate",
     "category": "Non-Coffee",
     "price": 29,
     "hot_price": 29,
@@ -208,7 +208,7 @@
   },
   {
     "sku": "EARL-GREY-MILK-TEA",
-    "name": "\u4f2f\u7235\u9bae\u5976\u8336",
+    "name": "London Fog Latte",
     "category": "Non-Coffee",
     "price": 36,
     "hot_price": 36,
@@ -223,7 +223,7 @@
   },
   {
     "sku": "ICE-CREAM-SHAKE",
-    "name": "\u662d\u548c\u96f2\u5462\u62ff\u68b3\u6253",
+    "name": "Cream Soda",
     "category": "Non-Coffee",
     "price": 38,
     "iced_price": 38
@@ -257,14 +257,14 @@
     "name": "\u8089\u91ac\u5343\u5c64\u9eb5",
     "category": "Lunch",
     "price": 62,
-    "stock": 45
+    "stock": 44
   },
   {
     "sku": "BEEF-TRUFFLE-EGGWHITE-RICE",
     "name": "\u80a5\u725b\u9ed1\u677e\u9732\u7092\u86cb\u767d\u98ef",
     "category": "Lunch",
     "price": 58,
-    "stock": 20
+    "stock": 19
   },
   {
     "sku": "BEEF-TRUFFLE-SCRAMBLED-UDON",

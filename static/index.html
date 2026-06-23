@@ -20,6 +20,7 @@
             </button>
           </div>
 
+          <div class="modifier-body">
           <div id="temperatureSection" class="modifier-section">
             <h3>Temperature</h3>
             <div class="modifier-options">
@@ -53,6 +54,36 @@
             </div>
           </div>
 
+          <div id="sugarSection" class="modifier-section">
+            <h3>Sugar</h3>
+            <div class="modifier-options">
+              <button class="modifier-option active" type="button" data-modifier-group="sugar" data-modifier-value="No sugar">
+                No sugar
+              </button>
+              <button class="modifier-option" type="button" data-modifier-group="sugar" data-modifier-value="Less sugar">
+                Less sugar
+              </button>
+              <button class="modifier-option" type="button" data-modifier-group="sugar" data-modifier-value="More sugar">
+                More sugar
+              </button>
+            </div>
+          </div>
+
+          <div id="iceLevelSection" class="modifier-section">
+            <h3>Ice Level</h3>
+            <div class="modifier-options">
+              <button class="modifier-option active" type="button" data-modifier-group="iceLevel" data-modifier-value="No ice">
+                No ice
+              </button>
+              <button class="modifier-option" type="button" data-modifier-group="iceLevel" data-modifier-value="Less ice">
+                Less ice
+              </button>
+              <button class="modifier-option" type="button" data-modifier-group="iceLevel" data-modifier-value="More ice">
+                More ice
+              </button>
+            </div>
+          </div>
+
           <div id="toppingSection" class="modifier-section">
             <h3>Toppings</h3>
             <div class="modifier-options topping-options">
@@ -64,6 +95,18 @@
               </button>
               <button class="modifier-option" type="button" data-modifier-group="topping" data-modifier-value="Cheese Foam">
                 Cheese Foam +$4
+              </button>
+            </div>
+          </div>
+
+          <div id="caramelCrustSection" class="modifier-section hidden-section">
+            <h3>Caramel Crust</h3>
+            <div class="modifier-options">
+              <button class="modifier-option active" type="button" data-modifier-group="caramelCrust" data-modifier-value="">
+                No caramel crust
+              </button>
+              <button class="modifier-option" type="button" data-modifier-group="caramelCrust" data-modifier-value="Caramel crust">
+                Caramel crust +$4
               </button>
             </div>
           </div>
@@ -108,6 +151,7 @@
             <button id="saveLunchStockButton" class="ghost-button small-button" type="button">
               Save Stock
             </button>
+          </div>
           </div>
 
           <div class="modifier-footer">
@@ -215,6 +259,11 @@
               <div class="totals">
                 <span>Subtotal</span>
                 <strong id="subtotalValue">$0.00</strong>
+              </div>
+
+              <div class="order-mode-switch payment-mode-switch" role="group" aria-label="Payment method">
+                <button id="cashPaymentButton" class="mode-button active" type="button">Cash</button>
+                <button id="epaymentButton" class="mode-button" type="button">E-payment</button>
               </div>
 
               <div class="checkout-actions">

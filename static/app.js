@@ -7,11 +7,15 @@ const state = {
   menuPage: 0,
   pageSize: 30,
   takeaway: false,
+  paymentMethod: "Cash",
   modifierProduct: null,
   modifierSelection: {
     temperature: "Hot",
     milk: "",
+    sugar: "No sugar",
+    iceLevel: "No ice",
     topping: "",
+    caramelCrust: "",
     dessertOption: "",
     iceCreamFlavor: "Vanilla",
     callerNumber: "",
@@ -34,6 +38,16 @@ const dessertOptionMap = {
 
 function money(value) {
   return `$${Number(value || 0).toFixed(2)}`;
+}
+
+function comboDiscountFromItems(items) {
+  const lunchCount = items
+    .filter((item) => (item.category || "") === "Lunch")
+    .reduce((sum, item) => sum + Number(item.quantity || 0), 0);
+  const drinkCount = items
+    .filter((item) => ["Coffee", "Non-Coffee"].includes(item.category || ""))
+    .reduce((sum, item) => sum + Number(item.quantity || 0), 0);
+  return Math.min(lunchCount, drinkCount) * 8;
 }
 
 function uid(prefix = "id") {
@@ -107,7 +121,11 @@ function needsDrinkModifier(product) {
 }
 
 function needsDessertModifier(product) {
-  return Object.prototype.hasOwnProperty.call(dessertOptionMap, product.sku);
+  return Object.prototype.hasOwnProperty.call(dessertOptionMap, product.sku) || needsCakeCaramelCrust(product);
+}
+
+function needsCakeCaramelCrust(product) {
+  return ["BASQUE-CHEESECAKE", "PISTACHIO-BASQUE-CHEESECAKE"].includes(product.sku);
 }
 
 function needsCallerModifier(product) {
@@ -125,11 +143,11 @@ function modifierMode(product) {
 }
 
 function dessertOptions(product) {
-  return dessertOptionMap[product.sku] || [];
+  return dessertOptionMap[product.sku] || [{ code: product.sku, label: product.name, price: Number(product.price || 0) }];
 }
 
 function needsDessertIceCream(product) {
-  return product.sku === "WAFFLE";
+  return ["WAFFLE", "EGG-WAFFLE"].includes(product.sku);
 }
 
 function availableTemperatures(product) {
@@ -162,7 +180,10 @@ function openModifier(product) {
   state.modifierSelection = {
     temperature: temperatures[0],
     milk: "",
+    sugar: "No sugar",
+    iceLevel: "No ice",
     topping: "",
+    caramelCrust: "",
     dessertOption: dessertOptions(product)[0]?.code || "",
     iceCreamFlavor: "Vanilla",
     callerNumber: "",
@@ -189,7 +210,14 @@ function closeModifier() {
 function modifierExtra() {
   if (!state.modifierProduct) return 0;
   if (modifierMode(state.modifierProduct) === "dessert") {
-    return 0;
+    let extra = 0;
+    if (state.modifierSelection.caramelCrust === "Caramel crust") {
+      extra += 4;
+    }
+    if (state.modifierProduct.sku === "EGG-WAFFLE" && state.modifierSelection.iceCreamFlavor) {
+      extra += 10;
+    }
+    return extra;
   }
   let extra = 0;
   if (
@@ -213,7 +241,7 @@ function selectedDessertOption(product) {
 
 function selectedModifierPrice(product) {
   if (modifierMode(product) === "dessert") {
-    return Number(selectedDessertOption(product)?.price || product.price || 0);
+    return Number(selectedDessertOption(product)?.price || product.price || 0) + modifierExtra();
   }
   return selectedDrinkPrice(product, state.modifierSelection.temperature) + modifierExtra();
 }
@@ -224,7 +252,16 @@ function renderModifier() {
   const stockLockedLunch = hasNoLunchStock(state.modifierProduct);
   document.getElementById("temperatureSection").classList.toggle("hidden-section", mode !== "drink");
   document.getElementById("milkSection").classList.toggle("hidden-section", mode !== "drink");
+  document.getElementById("sugarSection").classList.toggle("hidden-section", mode !== "drink");
+  document.getElementById("iceLevelSection").classList.toggle(
+    "hidden-section",
+    mode !== "drink" || state.modifierSelection.temperature !== "Iced"
+  );
   document.getElementById("toppingSection").classList.toggle("hidden-section", mode !== "drink");
+  document.getElementById("caramelCrustSection").classList.toggle(
+    "hidden-section",
+    mode !== "dessert" || !needsCakeCaramelCrust(state.modifierProduct)
+  );
   document.getElementById("dessertOptionSection").classList.toggle("hidden-section", mode !== "dessert");
   document.getElementById("iceCreamSection").classList.toggle(
     "hidden-section",
@@ -242,7 +279,7 @@ function renderModifier() {
       Number.isFinite(Number(state.modifierProduct.stock)) ? Number(state.modifierProduct.stock) : "";
   }
   if (mode === "dessert") {
-    const title = needsDessertIceCream(state.modifierProduct) ? "Waffle Option" : "Egg Waffle Option";
+    const title = "Options";
     document.getElementById("dessertOptionTitle").textContent = title;
     const optionsContainer = document.getElementById("dessertOptionButtons");
     optionsContainer.innerHTML = dessertOptions(state.modifierProduct)
@@ -298,6 +335,9 @@ function addModifierItemToCart() {
   if (mode === "dessert") {
     const selectedOption = selectedDessertOption(state.modifierProduct);
     parts = [selectedOption?.label || state.modifierProduct.name];
+    if (state.modifierSelection.caramelCrust) {
+      parts.push(state.modifierSelection.caramelCrust);
+    }
     if (needsDessertIceCream(state.modifierProduct)) {
       parts.push(state.modifierSelection.iceCreamFlavor);
     }
@@ -311,6 +351,12 @@ function addModifierItemToCart() {
     }
   } else {
     parts = [state.modifierProduct.name, state.modifierSelection.temperature];
+    if (state.modifierSelection.sugar) {
+      parts.push(state.modifierSelection.sugar);
+    }
+    if (state.modifierSelection.temperature === "Iced" && state.modifierSelection.iceLevel) {
+      parts.push(state.modifierSelection.iceLevel);
+    }
     if (state.modifierSelection.milk) {
       parts.push(state.modifierSelection.milk);
     }
@@ -503,11 +549,15 @@ function renderCart() {
   const container = document.getElementById("cartItems");
   const count = state.cart.reduce((sum, item) => sum + Number(item.quantity), 0);
   const subtotal = state.cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const comboDiscount = comboDiscountFromItems(state.cart);
+  const total = Math.max(0, subtotal - comboDiscount);
   document.getElementById("cartCount").textContent = `${count} items`;
-  document.getElementById("subtotalValue").textContent = money(subtotal);
-  document.getElementById("headerSubtotalValue").textContent = money(subtotal);
+  document.getElementById("subtotalValue").textContent = money(total);
+  document.getElementById("headerSubtotalValue").textContent = money(total);
   document.getElementById("dineInButton").classList.toggle("active", !state.takeaway);
   document.getElementById("takeawayButton").classList.toggle("active", state.takeaway);
+  document.getElementById("cashPaymentButton").classList.toggle("active", state.paymentMethod === "Cash");
+  document.getElementById("epaymentButton").classList.toggle("active", state.paymentMethod === "E-payment");
 
   if (!state.cart.length) {
     container.classList.add("empty-state");
@@ -516,7 +566,7 @@ function renderCart() {
   }
 
   container.classList.remove("empty-state");
-  container.innerHTML = state.cart
+  const rows = state.cart
     .map(
       (item) => `
         <div class="cart-row">
@@ -539,6 +589,20 @@ function renderCart() {
       `
     )
     .join("");
+  const discountRow = comboDiscount
+    ? `
+      <div class="cart-row discount-row">
+        <div class="cart-main">
+          <strong>Lunch + Drink Offer</strong>
+          <div class="cart-line-price">$8 each pair</div>
+        </div>
+        <div class="cart-side">
+          <strong>-${money(comboDiscount).replace("$", "")}</strong>
+        </div>
+      </div>
+    `
+    : "";
+  container.innerHTML = rows + discountRow;
 
   Array.from(container.querySelectorAll("[data-action='decrease']")).forEach((button) => {
     button.addEventListener("click", () => changeQuantity(button.dataset.id, -1));
@@ -595,6 +659,7 @@ async function checkout() {
   const payload = {
     cashier: document.getElementById("cashierInput").value.trim(),
     note: buildOrderNote(),
+    total: Math.max(0, state.cart.reduce((sum, item) => sum + item.price * item.quantity, 0) - comboDiscountFromItems(state.cart)),
     items: state.cart.map((item) => ({
       sku: item.sku,
       name: item.name,
@@ -643,6 +708,9 @@ function buildOrderNote() {
   if (state.takeaway) {
     noteParts.push("TAKEAWAY");
   }
+  if (state.paymentMethod) {
+    noteParts.push(`PAYMENT ${state.paymentMethod.toUpperCase()}`);
+  }
   if (rawNote) {
     noteParts.push(rawNote);
   }
@@ -682,6 +750,14 @@ function bindEvents() {
   });
   document.getElementById("takeawayButton").addEventListener("click", () => {
     state.takeaway = true;
+    renderCart();
+  });
+  document.getElementById("cashPaymentButton").addEventListener("click", () => {
+    state.paymentMethod = "Cash";
+    renderCart();
+  });
+  document.getElementById("epaymentButton").addEventListener("click", () => {
+    state.paymentMethod = "E-payment";
     renderCart();
   });
   document.getElementById("sidebarCloseButton").addEventListener("click", () => setSidebar(false));

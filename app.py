@@ -158,6 +158,16 @@ def apply_lunch_stock(items):
     save_products(products)
 
 
+def combo_discount(items) -> float:
+    lunch_count = sum(int(item.get("quantity", 0)) for item in items if str(item.get("category", "")).strip().lower() == "lunch")
+    drink_count = sum(
+        int(item.get("quantity", 0))
+        for item in items
+        if str(item.get("category", "")).strip().lower() in {"coffee", "non-coffee"}
+    )
+    return float(min(lunch_count, drink_count) * 8)
+
+
 def list_printers():
     printers = load_json(PRINTERS_PATH, [])
     return sorted(printers, key=lambda item: item.get("id", ""))
@@ -246,12 +256,14 @@ def validate_order(payload):
                 "line_total": line_total,
             }
         )
+    discount = combo_discount(clean_items)
     return {
         "cashier": str(payload.get("cashier", "")).strip(),
         "note": str(payload.get("note", "")).strip(),
         "items": clean_items,
         "subtotal": subtotal,
-        "total": subtotal,
+        "discount": discount,
+        "total": max(0.0, round(subtotal - discount, 2)),
         "print_jobs": payload.get("print_jobs") or [],
     }
 
@@ -316,13 +328,12 @@ def create_order(payload):
 
 def build_automatic_print_jobs(items):
     jobs = []
-    receipt_printer = find_printer_by_role("receipt")
     dessert_printer = find_printer_by_role("dessert")
     kitchen_printer = find_printer_by_role("kitchen")
     label_printer = find_printer_by_role("label")
 
-    if receipt_printer:
-        jobs.append({"printer_id": receipt_printer["id"], "copies": 1, "mode": "receipt"})
+    if dessert_printer:
+        jobs.append({"printer_id": dessert_printer["id"], "copies": 1, "mode": "receipt"})
 
     drink_items = [item for item in items if str(item.get("category", "")).lower() in {"coffee", "non-coffee"}]
     dessert_items = [item for item in items if str(item.get("category", "")).lower() == "dessert"]
@@ -331,9 +342,11 @@ def build_automatic_print_jobs(items):
     if label_printer and drink_items:
         jobs.append({"printer_id": label_printer["id"], "copies": 1, "mode": "label-items", "items": drink_items})
     if dessert_printer and dessert_items:
-        jobs.append({"printer_id": dessert_printer["id"], "copies": 1, "mode": "prep-items", "items": dessert_items})
+        for item in dessert_items:
+            jobs.append({"printer_id": dessert_printer["id"], "copies": 1, "mode": "prep-items", "items": [item]})
     if kitchen_printer and lunch_items:
-        jobs.append({"printer_id": kitchen_printer["id"], "copies": 1, "mode": "prep-items", "items": lunch_items})
+        for item in lunch_items:
+            jobs.append({"printer_id": kitchen_printer["id"], "copies": 1, "mode": "prep-items", "items": [item]})
 
     return jobs
 
@@ -347,6 +360,26 @@ def find_printer(printer_id: str):
 
 def safe_text(value: str) -> str:
     return str(value or "").replace("\n", " ").strip()
+
+
+def escpos_text(value: str, fallback: str = "") -> bytes:
+    text = safe_text(value)
+    if text:
+        try:
+            return text.encode("gb18030")
+        except UnicodeEncodeError:
+            encoded = text.encode("ascii", errors="ignore")
+            if encoded.strip():
+                return encoded
+    fallback_text = safe_text(fallback)
+    if fallback_text:
+        try:
+            return fallback_text.encode("gb18030")
+        except UnicodeEncodeError:
+            fallback_encoded = fallback_text.encode("ascii", errors="ignore")
+            if fallback_encoded.strip():
+                return fallback_encoded
+    return b"ITEM"
 
 
 def escpos_align(mode: str) -> bytes:
@@ -407,6 +440,8 @@ def build_zpl_label(printer, order_number, cashier, item, copies) -> bytes:
     dpmm = int(printer.get("dpmm", 8))
     width = mm_to_dots(printer.get("width_mm", 50), dpmm)
     height = mm_to_dots(printer.get("print_height_mm", printer.get("height_mm", 32)), dpmm)
+    post_feed = mm_to_dots(printer.get("post_feed_mm", 0), dpmm)
+    smart_backfeed = int(printer.get("smart_backfeed", 0))
     corner_radius = mm_to_dots(printer.get("corner_radius_mm", 0), dpmm)
     margin_left = mm_to_dots(printer.get("margin_left_mm", 2), dpmm) + corner_radius
     margin_top = mm_to_dots(printer.get("margin_top_mm", 2), dpmm) + corner_radius
@@ -419,7 +454,7 @@ def build_zpl_label(printer, order_number, cashier, item, copies) -> bytes:
     order_mode = "TAKEAWAY" if "TAKEAWAY" in safe_text(item.get("order_note", "")).upper() else "DINE-IN"
     single_label = f"""^XA
 ^PW{width}
-^LL{height}
+^LL{height + post_feed}
 ^LH0,0
 ^MMT
 ^CF0,20
@@ -433,7 +468,8 @@ def build_zpl_label(printer, order_number, cashier, item, copies) -> bytes:
 ^PQ{max(1, copies)},0,1,N
 ^XZ
 """
-    return single_label.encode("ascii", errors="ignore")
+    setup = f"^XSET,BACKFEED,{smart_backfeed}\n"
+    return setup.encode("ascii", errors="ignore") + single_label.encode("ascii", errors="ignore")
 
 
 def build_escpos_prep_ticket(printer, order_number, cashier, note, items, copies) -> bytes:
@@ -449,9 +485,9 @@ def build_escpos_prep_ticket(printer, order_number, cashier, note, items, copies
             top_feed,
             escpos_align("center"),
             escpos_bold(True),
-            escpos_size(1, 1),
+            escpos_size(2, 2),
             f"{order_mode}\n".encode("ascii", errors="ignore"),
-            escpos_size(0, 0),
+            escpos_size(1, 1),
             escpos_bold(False),
             f"{order_number}\n".encode("ascii", errors="ignore"),
             escpos_align("left"),
@@ -462,16 +498,18 @@ def build_escpos_prep_ticket(printer, order_number, cashier, note, items, copies
     for item in items:
         full_name = safe_text(item["name"])
         parts = [part.strip() for part in full_name.split("/") if part.strip()]
-        title = parts[0] if parts else full_name
+        fallback_name = safe_text(item.get("sku", "")).replace("-", " ")
+        title_source = parts[0] if parts else full_name
+        title = escpos_text(title_source, fallback_name)
         modifier = " / ".join(parts[1:])
         qty = f"x{item['quantity']}"
         lines.append(escpos_bold(True))
-        lines.append((margin_left + title[:content_columns] + "\n").encode("ascii", errors="ignore"))
+        lines.append(escpos_size(1, 1))
+        lines.append(margin_left.encode("ascii", errors="ignore") + title + b"\n")
+        lines.append(escpos_size(0, 0))
         lines.append(escpos_bold(False))
         if modifier:
-            modifier_lines = textwrap.wrap(modifier, width=max(10, content_columns)) or [modifier]
-            for modifier_line in modifier_lines:
-                lines.append(f"{margin_left}{modifier_line}\n".encode("ascii", errors="ignore"))
+            lines.append(margin_left.encode("ascii", errors="ignore") + escpos_text(modifier) + b"\n")
         if item.get("quantity", 1) > 1:
             lines.append(f"{margin_left}{qty}\n".encode("ascii", errors="ignore"))
         lines.append(b"\n")
@@ -482,6 +520,9 @@ def build_escpos_prep_ticket(printer, order_number, cashier, note, items, copies
 def build_escpos_receipt(printer, order_number, cashier, note, items, total, copies) -> bytes:
     columns = paper_columns(printer)
     now_text = datetime.now().strftime("%Y-%m-%d %H:%M")
+    short_digits = order_number[-3:] if len(order_number) >= 3 else order_number
+    short_code = f"C{short_digits}"
+    title_size = (0, 0) if columns <= 32 else (1, 1)
     margin_left = " " * printer_margin(printer, "margin_left_chars", 0)
     content_columns = max(20, columns - len(margin_left))
     top_feed = b"\n" * printer_margin(printer, "margin_top_lines", 0)
@@ -491,9 +532,14 @@ def build_escpos_receipt(printer, order_number, cashier, note, items, total, cop
     lines = [
         b"\x1b@",
         top_feed,
-        escpos_align("center"),
+        escpos_align("left"),
         escpos_bold(True),
-        escpos_size(1, 1),
+        escpos_size(2, 2),
+        f"{margin_left}{short_code}\n".encode("ascii", errors="ignore"),
+        escpos_size(0, 0),
+        b"\n",
+        escpos_align("center"),
+        escpos_size(*title_size),
         f"{RECEIPT_SHOP_NAME}\n".encode("ascii", errors="ignore"),
         escpos_size(0, 0),
         escpos_bold(False),
@@ -508,11 +554,17 @@ def build_escpos_receipt(printer, order_number, cashier, note, items, total, cop
     lines.append((margin_left + ("-" * content_columns) + "\n").encode("ascii", errors="ignore"))
 
     for item in items:
-        name = safe_text(item["name"])[:name_width]
+        fallback_name = safe_text(item.get("sku", "")).replace("-", " ")
+        name = escpos_text(item["name"], fallback_name)
         qty = f"x{item['quantity']}"
         amount = f"${item['line_total']:.2f}"
-        line = name.ljust(name_width) + qty.rjust(qty_width) + amount.rjust(price_width)
-        lines.append((margin_left + line + "\n").encode("ascii", errors="ignore"))
+        lines.append(margin_left.encode("ascii", errors="ignore") + name + b"\n")
+        detail_line = format_line(qty, amount, content_columns)
+        lines.append((margin_left + detail_line + "\n").encode("ascii", errors="ignore"))
+
+    discount = combo_discount(items)
+    if discount:
+        lines.append((margin_left + format_line("LUNCH+DRINK", f"-${discount:.2f}", content_columns) + "\n").encode("ascii", errors="ignore"))
 
     lines.extend(
         [
