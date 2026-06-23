@@ -521,7 +521,7 @@ label {
 
 .product-name {
   font-weight: 700;
-  font-size: clamp(1.175rem, 1.54vw, 1.62rem);
+  font-size: 1.3rem;
   line-height: 0.98;
   word-break: normal;
   overflow-wrap: normal;
@@ -531,7 +531,7 @@ label {
 
 .product-stock {
   margin-top: 4px;
-  font-size: clamp(1.175rem, 1.54vw, 1.62rem);
+  font-size: 1.3rem;
   font-weight: 600;
   line-height: 0.98;
   color: var(--muted);
