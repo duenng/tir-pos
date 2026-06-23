@@ -16,8 +16,8 @@
     "iced_price": 35
   },
   {
-    "sku": "CAPP",
-    "name": "Capp",
+    "sku": "CAPPUCCINO",
+    "name": "Cappuccino",
     "category": "Coffee",
     "price": 33,
     "hot_price": 33,
@@ -73,7 +73,7 @@
     "sku": "ESPRESSO",
     "name": "Espresso",
     "category": "Coffee",
-    "price": 0
+    "price": 24
   },
   {
     "sku": "ESPRESSO-TONIC",
@@ -95,12 +95,6 @@
     "category": "Coffee",
     "price": 39,
     "iced_price": 39
-  },
-  {
-    "sku": "HAND-DRIP",
-    "name": "Hand Drip",
-    "category": "Coffee",
-    "price": 0
   },
   {
     "sku": "AFFOGATO",
@@ -244,13 +238,13 @@
     "sku": "BASQUE-CHEESECAKE",
     "name": "\u5df4\u65af\u514b\u86cb\u7cd5",
     "category": "Dessert",
-    "price": 0
+    "price": 30
   },
   {
     "sku": "PISTACHIO-BASQUE-CHEESECAKE",
     "name": "\u958b\u5fc3\u679c\u5df4\u65af\u514b\u86cb\u7cd5",
     "category": "Dessert",
-    "price": 0
+    "price": 38
   },
   {
     "sku": "BOLOGNESE-LASAGNA",

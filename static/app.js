@@ -50,6 +50,10 @@ function comboDiscountFromItems(items) {
   return Math.min(lunchCount, drinkCount) * 8;
 }
 
+function takeawaySurchargeForProduct(product) {
+  return state.takeaway && ["Dessert", "Lunch"].includes(product.category || "") ? 2 : 0;
+}
+
 function uid(prefix = "id") {
   return `${prefix}-${Math.random().toString(16).slice(2, 10)}`;
 }
@@ -85,8 +89,9 @@ function addToCart(product) {
 }
 
 function addResolvedProductToCart(product) {
+  const basePrice = Number(product.price || 0);
   const found = state.cart.find(
-    (item) => item.sku === product.sku && item.name === product.name && item.price === Number(product.price || 0)
+    (item) => item.sku === product.sku && item.name === product.name && Number(item.base_price || 0) === basePrice
   );
   if (found) {
     found.quantity += 1;
@@ -97,11 +102,21 @@ function addResolvedProductToCart(product) {
       name: product.name,
       category: product.category || "",
       base_name: product.base_name || product.name,
-      price: Number(product.price || 0),
+      base_price: basePrice,
       quantity: 1,
     });
   }
   renderCart();
+}
+
+function cartItemUnitPrice(item) {
+  return Number(item.base_price || 0) + (
+    state.takeaway &&
+    ["Dessert", "Lunch"].includes(item.category || "") &&
+    item.sku !== "EGG-WAFFLE"
+      ? 2
+      : 0
+  );
 }
 
 function isLunch(product) {
@@ -150,6 +165,10 @@ function needsDessertIceCream(product) {
   return ["WAFFLE", "EGG-WAFFLE"].includes(product.sku);
 }
 
+function eggWaffleIceCreamOptional(product) {
+  return product.sku === "EGG-WAFFLE";
+}
+
 function availableTemperatures(product) {
   const options = [];
   if (Number.isFinite(Number(product.hot_price))) {
@@ -185,7 +204,7 @@ function openModifier(product) {
     topping: "",
     caramelCrust: "",
     dessertOption: dessertOptions(product)[0]?.code || "",
-    iceCreamFlavor: "Vanilla",
+    iceCreamFlavor: eggWaffleIceCreamOptional(product) ? "" : "Vanilla",
     callerNumber: "",
   };
   const mode = modifierMode(product);
@@ -240,10 +259,11 @@ function selectedDessertOption(product) {
 }
 
 function selectedModifierPrice(product) {
+  const takeawayExtra = takeawaySurchargeForProduct(product);
   if (modifierMode(product) === "dessert") {
-    return Number(selectedDessertOption(product)?.price || product.price || 0) + modifierExtra();
+    return Number(selectedDessertOption(product)?.price || product.price || 0) + modifierExtra() + takeawayExtra;
   }
-  return selectedDrinkPrice(product, state.modifierSelection.temperature) + modifierExtra();
+  return selectedDrinkPrice(product, state.modifierSelection.temperature) + modifierExtra() + takeawayExtra;
 }
 
 function renderModifier() {
@@ -338,7 +358,7 @@ function addModifierItemToCart() {
     if (state.modifierSelection.caramelCrust) {
       parts.push(state.modifierSelection.caramelCrust);
     }
-    if (needsDessertIceCream(state.modifierProduct)) {
+    if (needsDessertIceCream(state.modifierProduct) && state.modifierSelection.iceCreamFlavor) {
       parts.push(state.modifierSelection.iceCreamFlavor);
     }
     if (state.modifierSelection.callerNumber) {
@@ -548,7 +568,7 @@ function renderMenuPager(totalPages) {
 function renderCart() {
   const container = document.getElementById("cartItems");
   const count = state.cart.reduce((sum, item) => sum + Number(item.quantity), 0);
-  const subtotal = state.cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const subtotal = state.cart.reduce((sum, item) => sum + cartItemUnitPrice(item) * item.quantity, 0);
   const comboDiscount = comboDiscountFromItems(state.cart);
   const total = Math.max(0, subtotal - comboDiscount);
   document.getElementById("cartCount").textContent = `${count} items`;
@@ -572,7 +592,7 @@ function renderCart() {
         <div class="cart-row">
           <div class="cart-main">
             <strong>${item.name}</strong>
-            <div class="cart-line-price">${money(item.price)} each</div>
+            <div class="cart-line-price">${money(cartItemUnitPrice(item))} each</div>
           </div>
           <div class="cart-qty">
             <button class="qty-button" type="button" data-action="decrease" data-id="${item.id}">-</button>
@@ -580,7 +600,7 @@ function renderCart() {
             <button class="qty-button" type="button" data-action="increase" data-id="${item.id}">+</button>
           </div>
           <div class="cart-side">
-            <strong>${money(item.price * item.quantity)}</strong>
+            <strong>${money(cartItemUnitPrice(item) * item.quantity)}</strong>
             <button class="ghost-button remove-button" type="button" data-action="remove" data-id="${item.id}">
               Remove
             </button>
@@ -659,12 +679,12 @@ async function checkout() {
   const payload = {
     cashier: document.getElementById("cashierInput").value.trim(),
     note: buildOrderNote(),
-    total: Math.max(0, state.cart.reduce((sum, item) => sum + item.price * item.quantity, 0) - comboDiscountFromItems(state.cart)),
+    total: Math.max(0, state.cart.reduce((sum, item) => sum + cartItemUnitPrice(item) * item.quantity, 0) - comboDiscountFromItems(state.cart)),
     items: state.cart.map((item) => ({
       sku: item.sku,
       name: item.name,
       category: item.category,
-      price: item.price,
+      price: cartItemUnitPrice(item),
       quantity: item.quantity,
     })),
   };

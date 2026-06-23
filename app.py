@@ -168,6 +168,18 @@ def combo_discount(items) -> float:
     return float(min(lunch_count, drink_count) * 8)
 
 
+def takeaway_surcharge(items, note: str) -> float:
+    if "TAKEAWAY" not in safe_text(note).upper():
+        return 0.0
+    eligible_count = sum(
+        int(item.get("quantity", 0))
+        for item in items
+        if str(item.get("category", "")).strip().lower() in {"dessert", "lunch"}
+        and str(item.get("sku", "")).strip().upper() != "EGG-WAFFLE"
+    )
+    return float(eligible_count * 2)
+
+
 def list_printers():
     printers = load_json(PRINTERS_PATH, [])
     return sorted(printers, key=lambda item: item.get("id", ""))
@@ -256,14 +268,16 @@ def validate_order(payload):
                 "line_total": line_total,
             }
         )
+    note = str(payload.get("note", "")).strip()
+    surcharge = takeaway_surcharge(clean_items, note)
     discount = combo_discount(clean_items)
     return {
         "cashier": str(payload.get("cashier", "")).strip(),
-        "note": str(payload.get("note", "")).strip(),
+        "note": note,
         "items": clean_items,
-        "subtotal": subtotal,
+        "subtotal": round(subtotal + surcharge, 2),
         "discount": discount,
-        "total": max(0.0, round(subtotal - discount, 2)),
+        "total": max(0.0, round(subtotal + surcharge - discount, 2)),
         "print_jobs": payload.get("print_jobs") or [],
     }
 
