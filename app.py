@@ -233,10 +233,22 @@ def next_order_number() -> str:
     stamp = datetime.now().strftime("%Y%m%d")
     with get_db() as conn:
         row = conn.execute(
-            "SELECT COUNT(*) AS count FROM orders WHERE order_number LIKE ?",
+            """
+            SELECT order_number
+            FROM orders
+            WHERE order_number LIKE ?
+            ORDER BY order_number DESC
+            LIMIT 1
+            """,
             (f"{stamp}-%",),
         ).fetchone()
-        sequence = (row["count"] or 0) + 1
+        if row and row["order_number"]:
+            try:
+                sequence = int(str(row["order_number"]).rsplit("-", 1)[1]) + 1
+            except (IndexError, ValueError):
+                sequence = 1
+        else:
+            sequence = 1
     return f"{stamp}-{sequence:04d}"
 
 

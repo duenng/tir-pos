@@ -7,7 +7,7 @@ const state = {
   menuPage: 0,
   pageSize: 20,
   takeaway: false,
-  paymentMethod: "Cash",
+  paymentMethod: "E-payment",
   modifierProduct: null,
   modifierSelection: {
     temperature: "Hot",
