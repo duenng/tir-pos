@@ -251,48 +251,60 @@
     "name": "\u8089\u91ac\u5343\u5c64\u9eb5",
     "category": "Lunch",
     "price": 62,
-    "stock": 44
+    "stock": 0
   },
   {
     "sku": "BEEF-TRUFFLE-EGGWHITE-RICE",
     "name": "\u80a5\u725b\u9ed1\u677e\u9732\u7092\u86cb\u767d\u98ef",
     "category": "Lunch",
     "price": 58,
-    "stock": 19
+    "stock": 0
   },
   {
     "sku": "BEEF-TRUFFLE-SCRAMBLED-UDON",
     "name": "\u80a5\u725b\u9ed1\u677e\u9732\u7092\u86cb\u70cf\u51ac",
     "category": "Lunch",
     "price": 58,
-    "stock": 20
+    "stock": 0
   },
   {
     "sku": "YAM-CHICKEN-RICE",
     "name": "\u5c71\u627f\u5496\u54e9\u96de\u98ef",
     "category": "Lunch",
     "price": 52,
-    "stock": 20
+    "stock": 0
   },
   {
     "sku": "YAM-CHICKEN-UDON",
     "name": "\u5c71\u627f\u5496\u54e9\u96de\u8b9a\u5c90\u70cf\u51ac",
     "category": "Lunch",
     "price": 52,
-    "stock": 20
+    "stock": 0
   },
   {
     "sku": "PORK-CARTILAGE-BRAISED-EGG-RICE",
     "name": "\u8c6c\u8edf\u9aa8\u6ef7\u86cb\u98ef",
     "category": "Lunch",
     "price": 58,
-    "stock": 20
+    "stock": 0
   },
   {
     "sku": "PORK-CARTILAGE-BRAISED-EGG-UDON",
     "name": "\u8c6c\u8edf\u9aa8\u6ef7\u86cb\u8b9a\u5c90\u70cf\u51ac",
     "category": "Lunch",
     "price": 58,
-    "stock": 20
+    "stock": 0
+  },
+  {
+    "sku": "FILTER-CUP",
+    "name": "Filter Cup",
+    "category": "Others",
+    "price": 100
+  },
+  {
+    "sku": "DISCOUNT",
+    "name": "Discount",
+    "category": "Others",
+    "price": 0
   }
 ]

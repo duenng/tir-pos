@@ -171,13 +171,16 @@ def combo_discount(items) -> float:
 def takeaway_surcharge(items, note: str) -> float:
     if "TAKEAWAY" not in safe_text(note).upper():
         return 0.0
-    eligible_count = sum(
-        int(item.get("quantity", 0))
-        for item in items
-        if str(item.get("category", "")).strip().lower() in {"dessert", "lunch"}
-        and str(item.get("sku", "")).strip().upper() != "EGG-WAFFLE"
-    )
-    return float(eligible_count * 2)
+    surcharge = 0.0
+    for item in items:
+        quantity = int(item.get("quantity", 0))
+        category = str(item.get("category", "")).strip().lower()
+        sku = str(item.get("sku", "")).strip().upper()
+        if category == "lunch":
+            surcharge += quantity * 2
+        elif category == "dessert" and sku in {"WAFFLE", "BASQUE-CHEESECAKE", "PISTACHIO-BASQUE-CHEESECAKE"}:
+            surcharge += quantity * 2
+    return float(surcharge)
 
 
 def list_printers():
@@ -266,7 +269,7 @@ def validate_order(payload):
         if quantity <= 0:
             raise ValueError(f"Invalid quantity for {name}.")
         price = float(raw_item.get("price", 0))
-        if price < 0:
+        if price < 0 and str(raw_item.get("sku", "")).strip() != "DISCOUNT":
             raise ValueError(f"Invalid price for {name}.")
         line_total = round(price * quantity, 2)
         subtotal = round(subtotal + line_total, 2)
@@ -462,6 +465,23 @@ def mm_to_dots(mm: float, dpmm: int) -> int:
     return max(1, int(round(float(mm) * int(dpmm))))
 
 
+def short_order_code(order_number: str) -> str:
+    digits = str(order_number or "")[-3:] or str(order_number or "")
+    return f"C{digits}"
+
+
+def normalize_prep_modifier_text(value: str) -> str:
+    parts = [part.strip() for part in safe_text(value).split("/") if part.strip()]
+    normalized = []
+    for part in parts:
+        upper = part.upper()
+        if upper.startswith("CALLER "):
+            normalized.append(part[7:].strip())
+        else:
+            normalized.append(part)
+    return " / ".join(normalized)
+
+
 def build_zpl_label(printer, order_number, cashier, item, copies) -> bytes:
     dpmm = int(printer.get("dpmm", 8))
     width = mm_to_dots(printer.get("width_mm", 50), dpmm)
@@ -474,10 +494,12 @@ def build_zpl_label(printer, order_number, cashier, item, copies) -> bytes:
     full_name = safe_text(item["name"])
     parts = [part.strip() for part in full_name.split("/") if part.strip()]
     item_name = escape_zpl(parts[0] if parts else full_name)[:20]
-    modifier_text = escape_zpl(" / ".join(parts[1:]))[:40]
+    modifier_text = escape_zpl(normalize_prep_modifier_text(" / ".join(parts[1:])))[:40]
     modifier_line_1 = modifier_text[:20]
     modifier_line_2 = modifier_text[20:40]
     order_mode = "TAKEAWAY" if "TAKEAWAY" in safe_text(item.get("order_note", "")).upper() else "DINE-IN"
+    printed_at = datetime.now().strftime("%H:%M")
+    prep_code = short_order_code(order_number)
     single_label = f"""^XA
 ^PW{width}
 ^LL{height + post_feed}
@@ -485,12 +507,13 @@ def build_zpl_label(printer, order_number, cashier, item, copies) -> bytes:
 ^MMT
 ^CF0,20
 ^FO{margin_left},{margin_top + 28}^FD{order_mode}^FS
-^FO{margin_left},{margin_top + 52}^FD{order_number}^FS
+^FO{margin_left},{margin_top + 52}^FD{prep_code}^FS
+^FO{margin_left},{margin_top + 76}^FD{printed_at}^FS
 ^CF0,30
-^FO{margin_left},{margin_top + 78}^FD{item_name}^FS
-^CF0,20
-^FO{margin_left},{margin_top + 110}^FD{modifier_line_1}^FS
-^FO{margin_left},{margin_top + 134}^FD{modifier_line_2}^FS
+^FO{margin_left},{margin_top + 102}^FD{item_name}^FS
+^CF0,22
+^FO{margin_left},{margin_top + 136}^FD{modifier_line_1}^FS
+^FO{margin_left},{margin_top + 160}^FD{modifier_line_2}^FS
 ^PQ{max(1, copies)},0,1,N
 ^XZ
 """
@@ -504,6 +527,8 @@ def build_escpos_prep_ticket(printer, order_number, cashier, note, items, copies
     content_columns = max(16, columns - len(margin_left))
     top_feed = b"\n" * printer_margin(printer, "margin_top_lines", 0)
     order_mode = "TAKEAWAY" if "TAKEAWAY" in safe_text(note).upper() else "DINE-IN"
+    printed_at = datetime.now().strftime("%H:%M")
+    prep_code = short_order_code(order_number)
     lines = []
     lines.extend(
         [
@@ -515,7 +540,8 @@ def build_escpos_prep_ticket(printer, order_number, cashier, note, items, copies
             f"{order_mode}\n".encode("ascii", errors="ignore"),
             escpos_size(1, 1),
             escpos_bold(False),
-            f"{order_number}\n".encode("ascii", errors="ignore"),
+            f"{prep_code}\n".encode("ascii", errors="ignore"),
+            f"{printed_at}\n".encode("ascii", errors="ignore"),
             escpos_align("left"),
         ]
     )
@@ -527,15 +553,17 @@ def build_escpos_prep_ticket(printer, order_number, cashier, note, items, copies
         fallback_name = safe_text(item.get("sku", "")).replace("-", " ")
         title_source = parts[0] if parts else full_name
         title = escpos_text(title_source, fallback_name)
-        modifier = " / ".join(parts[1:])
+        modifier = normalize_prep_modifier_text(" / ".join(parts[1:]))
         qty = f"x{item['quantity']}"
         lines.append(escpos_bold(True))
         lines.append(escpos_size(1, 1))
         lines.append(margin_left.encode("ascii", errors="ignore") + title + b"\n")
+        if modifier:
+            lines.append(escpos_size(0, 1))
+            lines.append(escpos_bold(False))
+            lines.append(margin_left.encode("ascii", errors="ignore") + escpos_text(modifier) + b"\n")
         lines.append(escpos_size(0, 0))
         lines.append(escpos_bold(False))
-        if modifier:
-            lines.append(margin_left.encode("ascii", errors="ignore") + escpos_text(modifier) + b"\n")
         if item.get("quantity", 1) > 1:
             lines.append(f"{margin_left}{qty}\n".encode("ascii", errors="ignore"))
         lines.append(b"\n")

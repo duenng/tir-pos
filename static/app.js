@@ -19,6 +19,7 @@ const state = {
     dessertOption: "",
     iceCreamFlavor: "Vanilla",
     callerNumber: "",
+    discountAmount: "20",
   },
 };
 
@@ -70,6 +71,8 @@ const DEMO_PRODUCTS = [
   { sku: "YAM-CHICKEN-UDON", name: "山承咖哩雞讚岐烏冬", category: "Lunch", price: 52, stock: 20 },
   { sku: "PORK-CARTILAGE-BRAISED-EGG-RICE", name: "豬軟骨滷蛋飯", category: "Lunch", price: 58, stock: 20 },
   { sku: "PORK-CARTILAGE-BRAISED-EGG-UDON", name: "豬軟骨滷蛋讚岐烏冬", category: "Lunch", price: 58, stock: 20 },
+  { sku: "FILTER-CUP", name: "Filter Cup", category: "Others", price: 100 },
+  { sku: "DISCOUNT", name: "Discount", category: "Others", price: 0 },
 ];
 
 const DEMO_ORDERS = [
@@ -112,7 +115,16 @@ function comboDiscountFromItems(items) {
 }
 
 function takeawaySurchargeForProduct(product) {
-  return state.takeaway && ["Dessert", "Lunch"].includes(product.category || "") ? 2 : 0;
+  if (!state.takeaway) {
+    return 0;
+  }
+  if ((product.category || "") === "Lunch") {
+    return 2;
+  }
+  if ((product.category || "") === "Dessert" && ["WAFFLE", "BASQUE-CHEESECAKE", "PISTACHIO-BASQUE-CHEESECAKE"].includes(product.sku || "")) {
+    return 2;
+  }
+  return 0;
 }
 
 function uid(prefix = "id") {
@@ -181,13 +193,7 @@ function addResolvedProductToCart(product) {
 }
 
 function cartItemUnitPrice(item) {
-  return Number(item.base_price || 0) + (
-    state.takeaway &&
-    ["Dessert", "Lunch"].includes(item.category || "") &&
-    item.sku !== "EGG-WAFFLE"
-      ? 2
-      : 0
-  );
+  return Number(item.base_price || 0) + takeawaySurchargeForProduct(item);
 }
 
 function isLunch(product) {
@@ -199,7 +205,11 @@ function hasNoLunchStock(product) {
 }
 
 function needsItemModifier(product) {
-  return needsDrinkModifier(product) || needsDessertModifier(product) || needsCallerModifier(product);
+  return isDiscountProduct(product) || needsDrinkModifier(product) || needsDessertModifier(product) || needsCallerModifier(product);
+}
+
+function isDiscountProduct(product) {
+  return (product?.sku || "") === "DISCOUNT";
 }
 
 function needsDrinkModifier(product) {
@@ -215,10 +225,16 @@ function needsCakeCaramelCrust(product) {
 }
 
 function needsCallerModifier(product) {
+  if (isDiscountProduct(product)) {
+    return false;
+  }
   return ["Dessert", "Lunch"].includes(product.category || "");
 }
 
 function modifierMode(product) {
+  if (isDiscountProduct(product)) {
+    return "discount";
+  }
   if (needsDessertModifier(product)) {
     return "dessert";
   }
@@ -277,11 +293,13 @@ function openModifier(product) {
     dessertOption: dessertOptions(product)[0]?.code || "",
     iceCreamFlavor: eggWaffleIceCreamOptional(product) ? "" : "Vanilla",
     callerNumber: "",
+    discountAmount: "20",
   };
   const mode = modifierMode(product);
   document.getElementById("modifierEyebrow").textContent = {
     dessert: "Dessert Modifier",
     caller: "Caller Modifier",
+    discount: "Discount Modifier",
     drink: "Drink Modifier",
   }[mode];
   const stockSuffix = isLunch(product) && Number.isFinite(Number(product.stock)) ? ` (${product.stock} left)` : "";
@@ -330,6 +348,9 @@ function selectedDessertOption(product) {
 }
 
 function selectedModifierPrice(product) {
+  if (isDiscountProduct(product)) {
+    return -Math.abs(Number(state.modifierSelection.discountAmount || 0));
+  }
   const takeawayExtra = takeawaySurchargeForProduct(product);
   if (modifierMode(product) === "dessert") {
     return Number(selectedDessertOption(product)?.price || product.price || 0) + modifierExtra() + takeawayExtra;
@@ -343,6 +364,7 @@ function renderModifier() {
   const stockLockedLunch = hasNoLunchStock(state.modifierProduct);
   const dessertOptionList = mode === "dessert" ? dessertOptions(state.modifierProduct) : [];
   const showDessertOptions = mode === "dessert" && dessertOptionList.length > 1;
+  const isDiscount = isDiscountProduct(state.modifierProduct);
   document.getElementById("temperatureSection").classList.toggle("hidden-section", mode !== "drink");
   document.getElementById("milkSection").classList.toggle("hidden-section", mode !== "drink");
   document.getElementById("sugarSection").classList.toggle("hidden-section", mode !== "drink");
@@ -365,11 +387,15 @@ function renderModifier() {
     !["dessert", "caller"].includes(mode) || stockLockedLunch
   );
   document.getElementById("lunchStockSection").classList.toggle("hidden-section", !isLunch(state.modifierProduct));
+  document.getElementById("discountSection").classList.toggle("hidden-section", !isDiscount);
   document.getElementById("modifierAddButton").disabled = stockLockedLunch;
   document.getElementById("modifierAddButton").classList.toggle("hidden-option", stockLockedLunch);
   if (isLunch(state.modifierProduct)) {
     document.getElementById("lunchStockInput").value =
       Number.isFinite(Number(state.modifierProduct.stock)) ? Number(state.modifierProduct.stock) : "";
+  }
+  if (isDiscount) {
+    document.getElementById("discountAmountInput").value = state.modifierSelection.discountAmount || "20";
   }
   if (mode === "dessert") {
     const title = "Options";
@@ -425,7 +451,9 @@ function addModifierItemToCart() {
   const mode = modifierMode(state.modifierProduct);
   const finalPrice = selectedModifierPrice(state.modifierProduct);
   let parts = [state.modifierProduct.name];
-  if (mode === "dessert") {
+  if (isDiscountProduct(state.modifierProduct)) {
+    parts = [state.modifierProduct.name];
+  } else if (mode === "dessert") {
     const selectedOption = selectedDessertOption(state.modifierProduct);
     parts = [selectedOption?.label || state.modifierProduct.name];
     if (state.modifierSelection.caramelCrust) {
@@ -589,7 +617,7 @@ function renderProducts() {
 }
 
 function categories() {
-  return ["Coffee", "Non-Coffee", "Dessert", "Lunch"];
+  return ["Coffee", "Non-Coffee", "Dessert", "Lunch", "Others"];
 }
 
 function renderCategoryBar() {
@@ -755,6 +783,11 @@ function renderOrders() {
     .join("");
 }
 
+function resetOrderDefaults() {
+  state.takeaway = false;
+  state.paymentMethod = "E-payment";
+}
+
 async function checkout() {
   if (!state.cart.length) {
     showMessage("Cart is empty.", "error");
@@ -794,6 +827,7 @@ async function checkout() {
       })),
     });
     state.cart = [];
+    resetOrderDefaults();
     renderCart();
     renderOrders();
     showMessage("Demo order saved locally.", "success");
@@ -813,6 +847,7 @@ async function checkout() {
     }
 
     state.cart = [];
+    resetOrderDefaults();
     renderCart();
     await loadProducts();
     showMessage(
@@ -912,6 +947,13 @@ function bindEvents() {
   });
   document.getElementById("modifierCloseButton").addEventListener("click", closeModifier);
   document.getElementById("modifierAddButton").addEventListener("click", addModifierItemToCart);
+  document.getElementById("discountAmountInput").addEventListener("input", (event) => {
+    const raw = String(event.target.value || "").trim();
+    state.modifierSelection.discountAmount = raw || "0";
+    if (state.modifierProduct) {
+      document.getElementById("modifierPrice").textContent = money(selectedModifierPrice(state.modifierProduct));
+    }
+  });
   document.getElementById("saveLunchStockButton").addEventListener("click", saveLunchStock);
   document.getElementById("modifierModal").addEventListener("click", (event) => {
     const button = event.target.closest("[data-modifier-group]");
