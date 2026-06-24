@@ -341,6 +341,7 @@ function renderModifier() {
   if (!state.modifierProduct) return;
   const mode = modifierMode(state.modifierProduct);
   const stockLockedLunch = hasNoLunchStock(state.modifierProduct);
+  const dessertOptionList = mode === "dessert" ? dessertOptions(state.modifierProduct) : [];
   const showDessertOptions = mode === "dessert" && dessertOptionList.length > 1;
   document.getElementById("temperatureSection").classList.toggle("hidden-section", mode !== "drink");
   document.getElementById("milkSection").classList.toggle("hidden-section", mode !== "drink");
