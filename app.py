@@ -738,6 +738,22 @@ def export_orders_csv():
                     order["total"],
                 ]
             )
+        built_in_discount = combo_discount(order["items"])
+        if built_in_discount:
+            output.append(
+                [
+                    order["order_number"],
+                    order["created_at"],
+                    order["cashier"],
+                    order["note"],
+                    "BUILTIN-DISCOUNT",
+                    "Lunch + Drink Offer",
+                    -8,
+                    int(round(built_in_discount / 8)),
+                    -built_in_discount,
+                    order["total"],
+                ]
+            )
     lines = []
     for row in output:
         escaped = []

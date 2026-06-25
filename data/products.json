@@ -27,8 +27,8 @@
     "sku": "FLAT-WHITE",
     "name": "Flat White",
     "category": "Coffee",
-    "price": 36,
-    "hot_price": 36
+    "price": 33,
+    "hot_price": 33
   },
   {
     "sku": "MOCHA",
